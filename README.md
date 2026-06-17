@@ -1,164 +1,134 @@
-# Sport Tournament Database Manager
+# Sport Sync: Tournament Database Manager
 
-A full-stack application for managing sport tournament data with React, Express.js, and PostgreSQL.
+A premium, full-stack database application designed to administer, query, and analyze sports tournaments, teams, matches, and participant schedules. Built with a modern **SaaS Dashboard layout** utilizing **React**, **TypeScript**, **Tailwind CSS**, **Node.js/Express**, and **PostgreSQL**.
 
-## Features
+---
 
-- **CRUD Operations**: Insert, Update, and Delete players
-- **Complex Reporting**: Multi-department organizers and undefeated teams queries
-- **PostgreSQL Functions**: Call database functions to retrieve player team and college information
-- **Modern UI**: Built with React, TypeScript, and Tailwind CSS
+## 📸 Application Showcase
 
-## Project Structure
+### 1. Main Dashboard Canvas
+The landing screen groups features logically into operations, analytical reports, and stored functions. It features a real-time blinking PostgreSQL database health banner.
+![Dashboard Layout](screenshots/homepage_dashboard.png)
+
+### 2. Multi-Step Form with Progress Stepper
+The registration form utilizes a custom visual progress stepper. Choosing "Player" vs "Spectator" changes the layout conditionally to gather role-specific physical attributes or ticket pass tiers.
+![Stepper and Form](screenshots/register_person_step1.png)
+
+### 3. Borderless Report Tables & Status Badges
+Complex analytical reports are displayed in a borderless tabular format with zebra striping. Data fields like seasons (`spring`/`fall`), outcome states, and ticket tiers are converted into dynamic colored pill badges.
+![Report Table Showcase](screenshots/tournament_participants_report.png)
+
+---
+
+## 🚀 Key Features
+
+* **Sleek SaaS Dashboard**: Groups commands into *Management & Operations*, *Analytical Reports*, and *Database Function Queries*.
+* **Relational Integrity Forms (CRUD)**:
+  * **Register Person**: Conditional multi-step form to register generic persons as specialized athletes or ticketed spectators.
+  * **Create Tournament**: Checks date overlapping boundaries and validates tournament years.
+  * **Manage Player**: Custom interface to insert, update contact info/physical attributes, or delete players. Displays a side-by-side proposed modifications comparison table.
+* **Complex SQL Analytics**:
+  * **Tournament Participants**: Detailed view of registered players grouped by season schedule.
+  * **Top Scoring Players**: Analytics querying the top 10 scoring athletes.
+  * **Team Win Statistics**: Multi-table aggregate statistics showcasing Wins, Losses, and Draws.
+  * **Multi-Department Organizers**: Intersects organizer rosters who worked across different departments.
+  * **Fall Undefeated Teams**: Custom subqueries locating teams undefeated during Autumn tournaments.
+* **PostgreSQL Function Integration**: Calls database-stored procedures like `get_player_current_team_info(player_id)` to query player affiliations.
+
+---
+
+## 🛠️ Architecture & Tech Stack
 
 ```
 sportWeb/
-├── backend/              # Express.js backend
+├── backend/              # Node.js & Express.js REST API
 │   ├── db/
-│   │   └── db.js        # PostgreSQL connection pool
-│   ├── routes/
-│   │   ├── playerRoutes.js    # Player CRUD operations
-│   │   ├── reportRoutes.js    # Complex reporting queries
-│   │   └── functionRoutes.js  # PostgreSQL function calls
-│   ├── server.js        # Express server setup
-│   └── package.json
-├── frontend/            # React frontend
+│   │   └── db.js        # PostgreSQL pool connection
+│   ├── routes/          # API Route handlers (Players, Tournaments, Reports)
+│   └── server.js        # Express server setup
+├── frontend/            # React & TypeScript Client SPA
 │   ├── src/
-│   │   ├── components/
-│   │   │   └── ReportTable.tsx
-│   │   ├── pages/
-│   │   │   ├── HomePage.tsx
-│   │   │   ├── PlayerCrudPage.tsx
-│   │   │   ├── FunctionCallPage.tsx
-│   │   │   └── ReportViewPage.tsx
-│   │   ├── App.tsx
-│   │   ├── main.tsx
-│   │   └── index.css
-│   └── package.json
-└── POSTGRES_DDL.sql     # Database schema and functions
+│   │   ├── components/  # Reusable UI components (ReportTable)
+│   │   ├── pages/       # Page views (Dashboard, Crud forms, reports)
+│   │   └── App.tsx      # React router settings
+│   └── tailwind.config.js
+└── POSTGRES_DDL.sql     # Database DDL structure, constraints, and functions
 ```
 
-## Prerequisites
+### Technologies Used:
+* **Frontend**: React (v18), TypeScript, Tailwind CSS, React Router (v6), Axios.
+* **Backend**: Node.js, Express.js.
+* **Database**: PostgreSQL (v12+), `pg` connection pool.
 
-- Node.js (v16 or higher)
-- PostgreSQL (v12 or higher)
-- npm or yarn
+---
 
-## Setup Instructions
+## ⚙️ Installation & Configuration
+
+### Prerequisites
+* **Node.js** (v16 or higher)
+* **PostgreSQL** (v12 or higher)
 
 ### 1. Database Setup
-
-1. Create a PostgreSQL database:
+1. Open your PostgreSQL console and create the database:
    ```sql
    CREATE DATABASE sporttournament;
    ```
-
-2. Run the DDL script to create tables and functions:
+2. Populate the tables and functions using the DDL script:
    ```bash
    psql -U postgres -d sporttournament -f POSTGRES_DDL.sql
    ```
 
 ### 2. Backend Setup
-
-1. Navigate to the backend directory:
+1. Navigate to the backend directory and install dependencies:
    ```bash
    cd backend
-   ```
-
-2. Install dependencies:
-   ```bash
    npm install
    ```
-
-3. Create a `.env` file (copy from `.env.example`):
-   ```bash
-   cp .env.example .env
-   ```
-
-4. Update `.env` with your PostgreSQL credentials:
-   ```
+2. Create a `.env` file in `backend/` and configure database connection parameters:
+   ```env
    DB_HOST=localhost
    DB_PORT=5432
    DB_NAME=sporttournament
    DB_USER=postgres
-   DB_PASSWORD=your_password_here
+   DB_PASSWORD=your_postgres_password
    PORT=5000
    NODE_ENV=development
    ```
-
-5. Start the backend server:
+3. Start the Express server:
    ```bash
    npm start
    ```
 
-   The server will run on `http://localhost:5000`
-
 ### 3. Frontend Setup
-
-1. Navigate to the frontend directory:
+1. Navigate to the frontend directory and install dependencies:
    ```bash
-   cd frontend
-   ```
-
-2. Install dependencies:
-   ```bash
+   cd ../frontend
    npm install
    ```
-
-3. Start the development server:
+2. Launch the Vite dev server:
    ```bash
    npm run dev
    ```
+3. Open `http://localhost:3000` in your web browser.
 
-   The frontend will run on `http://localhost:3000`
+---
 
-## API Endpoints
+## 📡 API Reference endpoints
 
-### Player CRUD Operations
+### Operations & CRUD
+* `POST /api/person/player` — Register a person and athlete profile.
+* `POST /api/person/spectator` — Register a spectator with tournament tickets.
+* `POST /api/tournament` — Add a new tournament schedule (Year limit: 2000-2035).
+* `GET /api/player/:id` — Load single player profile.
+* `PUT /api/player/:id` — Update contact data and measurements.
+* `DELETE /api/player/:id` — Delete a player.
 
-- `POST /api/player` - Insert a new player (Q2)
-- `PUT /api/player/:id` - Update player information (Q3)
-- `DELETE /api/player/:id` - Delete a player (Q4)
-- `GET /api/player/:id` - Get a single player
-- `GET /api/player` - Get all players
+### Reporting & Views
+* `GET /api/report/tournament-participants` — Roster of players grouped by tournament.
+* `GET /api/report/top-scoring` — Top 10 high-scoring players list.
+* `GET /api/report/team-stats` — General win/loss statistics.
+* `GET /api/report/multidept-organizers` — Organizers working across multiple departments.
+* `GET /api/report/fall-undefeated` — Unbeaten Autumn teams list.
 
-### Reports
-
-- `GET /api/report/multidept-organizers` - Q22: Organizers who worked in both Logistics and Marketing
-- `GET /api/report/fall2024-undefeated` - Q30: Teams with win outcome in every Fall 2024 match
-
-### Functions
-
-- `GET /api/function/player-team-college/:id` - Q36: Get current team and college for a player
-
-## Usage
-
-1. Open `http://localhost:3000` in your browser
-2. Navigate through the menu to access different features:
-   - **Insert Player**: Add a new player to the database
-   - **Update Player**: Modify player contact information and college
-   - **Delete Player**: Remove a player from the database
-   - **Multi-Department Organizers**: View organizers in multiple departments
-   - **Fall 2024 Undefeated Teams**: View undefeated teams in Fall 2024
-   - **Player Team & College**: Get current team and college information
-
-## Technologies Used
-
-- **Frontend**: React 18, TypeScript, Tailwind CSS, React Router, Axios
-- **Backend**: Node.js, Express.js, PostgreSQL (pg)
-- **Database**: PostgreSQL 12+
-
-## Notes
-
-- Ensure PostgreSQL is running before starting the backend
-- The database connection pool handles multiple concurrent requests
-- All API endpoints use parameterized queries to prevent SQL injection
-- The frontend uses Vite as the build tool for fast development
-
-## Troubleshooting
-
-- **Database connection errors**: Verify PostgreSQL is running and credentials in `.env` are correct
-- **Port conflicts**: Change `PORT` in backend `.env` or update frontend proxy in `vite.config.ts`
-- **CORS errors**: Ensure backend CORS middleware is enabled (already configured)
-- **Function not found**: Make sure you've run the `POSTGRES_DDL.sql` script to create the function
-
+### Database Functions
+* `GET /api/function/player-team-college/:id` — Returns `get_player_current_team_info` results.
