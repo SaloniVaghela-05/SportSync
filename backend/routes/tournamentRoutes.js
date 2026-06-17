@@ -146,9 +146,9 @@ router.post('/', async (req, res) => {
     }
 
     
-    if (tournament_year < 2000 || tournament_year > 2025) {
+    if (tournament_year < 2000 || tournament_year > 2035) {
       return res.status(400).json({
-        error: 'tournament_year must be between 2000 and 2025',
+        error: 'tournament_year must be between 2000 and 2035',
       });
     }
 

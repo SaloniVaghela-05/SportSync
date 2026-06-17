@@ -5,7 +5,16 @@ import axios from 'axios';
 const API_BASE_URL = 'http://localhost:5000/api';
 
 const HomePage = () => {
-  const [dbStatus, setDbStatus] = useState<{ status: string; database?: string; error?: string } | null>(null);
+  const [dbStatus, setDbStatus] = useState<{ 
+    status: string; 
+    database?: string; 
+    error?: string;
+    host?: string;
+    port?: number | string;
+    postgres_version?: string;
+    code?: string;
+    suggestion?: string;
+  } | null>(null);
 
   useEffect(() => {
     checkDatabaseConnection();

@@ -98,11 +98,11 @@ router.post('/', async (req, res) => {
 
 
 router.put('/:id', async (req, res) => {
+  const client = await pool.connect();
   try {
     const { id } = req.params;
-    const { contact_no, college_name, height, weight, bloodgroup } = req.body;
+    const { person_name, gender, dob, contact_no, college_name, height, weight, bloodgroup } = req.body;
 
-    
     const oldDataQuery = `
       SELECT p.person_id, p.person_name, p.gender, p.dob, p.contact_no, p.college_name, p.roles,
              pl.height, pl.weight, pl.bloodgroup, pl.joining_year
@@ -110,9 +110,10 @@ router.put('/:id', async (req, res) => {
       JOIN Player pl ON p.person_id = pl.player_id
       WHERE p.person_id = $1;
     `;
-    const oldDataResult = await query(oldDataQuery, [id]);
+    const oldDataResult = await client.query(oldDataQuery, [id]);
 
     if (oldDataResult.rows.length === 0) {
+      client.release();
       return res.status(404).json({ error: 'Player not found' });
     }
 
@@ -139,6 +140,7 @@ router.put('/:id', async (req, res) => {
 
     if (contact_no !== undefined) {
       if (!/^[0-9]{10}$/.test(contact_no)) {
+        client.release();
         return res.status(400).json({ error: 'contact_no must be exactly 10 digits' });
       }
       updates.push(`contact_no = $${paramIndex++}`);
@@ -150,24 +152,9 @@ router.put('/:id', async (req, res) => {
       values.push(college_name);
     }
 
-    if (updates.length === 0 && height === undefined && weight === undefined && bloodgroup === undefined) {
-      return res.status(400).json({ error: 'No fields to update' });
-    }
-
-    
     let newPersonData = oldData;
-    if (updates.length > 0) {
-      values.push(id);
-      const updatePersonQuery = `
-        UPDATE Person
-        SET ${updates.join(', ')}
-        WHERE person_id = $${paramIndex}
-        RETURNING *;
-      `;
-      const updatePersonResult = await query(updatePersonQuery, values);
-      newPersonData = { ...oldData, ...updatePersonResult.rows[0] };
-    }
-
+    let newPlayerData = oldData;
+    let personUpdated = updates.length > 0;
     
     const playerUpdates = [];
     const playerValues = [];
@@ -187,9 +174,30 @@ router.put('/:id', async (req, res) => {
       playerUpdates.push(`bloodgroup = $${playerParamIndex++}`);
       playerValues.push(bloodgroup);
     }
+    
+    let playerUpdated = playerUpdates.length > 0;
 
-    let newPlayerData = oldData;
-    if (playerUpdates.length > 0) {
+    if (!personUpdated && !playerUpdated) {
+      client.release();
+      return res.status(400).json({ error: 'No fields to update' });
+    }
+
+    await client.query('BEGIN');
+
+    if (personUpdated) {
+      values.push(id);
+      const updatePersonQuery = `
+        UPDATE Person
+        SET ${updates.join(', ')}
+        WHERE person_id = $${paramIndex}
+        RETURNING *;
+      `;
+      const updatePersonResult = await client.query(updatePersonQuery, values);
+      newPersonData = { ...oldData, ...updatePersonResult.rows[0] };
+      newPlayerData = newPersonData;
+    }
+
+    if (playerUpdated) {
       playerValues.push(id);
       const updatePlayerQuery = `
         UPDATE Player
@@ -197,11 +205,11 @@ router.put('/:id', async (req, res) => {
         WHERE player_id = $${playerParamIndex}
         RETURNING *;
       `;
-      const updatePlayerResult = await query(updatePlayerQuery, playerValues);
+      const updatePlayerResult = await client.query(updatePlayerQuery, playerValues);
       newPlayerData = { ...newPersonData, ...updatePlayerResult.rows[0] };
-    } else {
-      newPlayerData = newPersonData;
     }
+
+    await client.query('COMMIT');
 
     res.json({
       message: 'Player updated successfully',
@@ -209,8 +217,13 @@ router.put('/:id', async (req, res) => {
       new: newPlayerData,
     });
   } catch (error) {
+    await client.query('ROLLBACK');
     console.error('Error updating player:', error);
     res.status(500).json({ error: 'Failed to update player', details: error.message });
+  } finally {
+    if (client) {
+      client.release();
+    }
   }
 });
 

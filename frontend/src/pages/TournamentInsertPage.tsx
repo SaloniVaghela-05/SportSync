@@ -90,8 +90,8 @@ const TournamentInsertPage: React.FC = () => {
       ? parseInt(formData.tournament_year, 10) 
       : formData.tournament_year;
     
-    if (year < 2000 || year > 2025) {
-      setMessage({ type: 'error', text: 'Tournament year must be between 2000 and 2025' });
+    if (year < 2000 || year > 2035) {
+      setMessage({ type: 'error', text: 'Tournament year must be between 2000 and 2035' });
       setLoading(false);
       return;
     }
@@ -204,9 +204,9 @@ const TournamentInsertPage: React.FC = () => {
                 )}
               </div>
 
-              <div>
+               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Tournament Year * (2000-2025)
+                  Tournament Year * (2000-2035)
                 </label>
                 <input
                   type="number"
@@ -215,7 +215,7 @@ const TournamentInsertPage: React.FC = () => {
                   onChange={handleChange}
                   required
                   min="2000"
-                  max="2025"
+                  max="2035"
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
               </div>
