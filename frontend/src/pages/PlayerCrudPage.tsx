@@ -113,7 +113,6 @@ const PlayerCrudPage: React.FC<{ mode: 'insert' | 'update' | 'delete' }> = ({ mo
       } else if (mode === 'update') {
         const updateData: Partial<PlayerFormData> = {};
         
-        
         if (formData.contact_no !== oldData?.contact_no) {
           updateData.contact_no = formData.contact_no;
         }
@@ -195,65 +194,97 @@ const PlayerCrudPage: React.FC<{ mode: 'insert' | 'update' | 'delete' }> = ({ mo
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-8">
-      <div className="container mx-auto px-4 max-w-4xl">
-        <div className="mb-6">
+    <div className="min-h-screen bg-slate-50 py-10 font-sans antialiased text-slate-800">
+      <div className="container mx-auto px-6 max-w-3xl">
+        {/* Navigation & Header */}
+        <div className="mb-8">
           <button
             onClick={() => navigate('/')}
-            className="text-blue-600 hover:text-blue-800 font-medium mb-4"
+            className="group flex items-center gap-2 text-indigo-600 hover:text-indigo-800 font-semibold transition-colors mb-4 text-sm"
           >
-            ← Back to Home
+            <svg className="w-4 h-4 transform group-hover:-translate-x-0.5 transition-transform" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+            </svg>
+            Back to Dashboard
           </button>
-          <h1 className="text-4xl font-bold text-gray-800 capitalize">
+          <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight capitalize">
             {mode} Player
           </h1>
-          <p className="text-gray-600 mt-2">
-            {mode === 'insert' && 'Q2: Insert a new player into Person and Player tables'}
-            {mode === 'update' && 'Q3: Update player information'}
-            {mode === 'delete' && 'Q4: Delete a player from the database'}
+          <p className="text-sm text-slate-500 mt-1">
+            {mode === 'insert' && 'Insert a new player into both the Person and Player database tables.'}
+            {mode === 'update' && 'Update contact number, college name, or physical attributes for an existing player.'}
+            {mode === 'delete' && 'Delete a player profile and associated records permanently.'}
           </p>
         </div>
 
+        {/* Notifications */}
         {message && (
           <div
-            className={`mb-6 p-4 rounded-lg ${
+            className={`mb-6 p-4 rounded-xl border flex items-start gap-3 text-sm ${
               message.type === 'success'
-                ? 'bg-green-100 text-green-800 border border-green-300'
-                : 'bg-red-100 text-red-800 border border-red-300'
+                ? 'bg-emerald-50 border-emerald-100 text-emerald-800'
+                : 'bg-rose-50 border-rose-100 text-rose-800'
             }`}
           >
-            {message.text}
+            {message.type === 'success' ? (
+              <svg className="w-5 h-5 text-emerald-500 shrink-0" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            ) : (
+              <svg className="w-5 h-5 text-rose-500 shrink-0" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+            )}
+            <div>
+              <p className="font-semibold">{message.type === 'success' ? 'Operation Success' : 'Database Notice'}</p>
+              <p className="mt-0.5">{message.text}</p>
+            </div>
           </div>
         )}
 
-        <div className="bg-white rounded-lg shadow-md p-6">
-          {mode === 'update' && (
-            <div className="mb-6">
-              <div className="flex gap-4 mb-4">
-                <input
-                  type="text"
-                  placeholder="Enter Player ID"
-                  value={fetchId}
-                  onChange={(e) => setFetchId(e.target.value)}
-                  className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
-                <button
-                  onClick={handleFetchClick}
-                  disabled={loading || !fetchId}
-                  className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  Fetch Data
-                </button>
-              </div>
+        {/* Fetch Card (Update Mode Only) */}
+        {mode === 'update' && (
+          <div className="bg-white border border-slate-100 rounded-xl p-5 shadow-sm mb-6 flex flex-col sm:flex-row gap-4 items-end">
+            <div className="flex-1 w-full">
+              <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">
+                Search Player ID
+              </label>
+              <input
+                type="text"
+                placeholder="e.g. P001"
+                value={fetchId}
+                onChange={(e) => setFetchId(e.target.value)}
+                className="w-full border border-slate-200 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 bg-slate-50/50 transition-all text-slate-800 placeholder-slate-400"
+              />
             </div>
-          )}
+            <button
+              type="button"
+              onClick={handleFetchClick}
+              disabled={loading || !fetchId}
+              className="w-full sm:w-auto px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-lg shadow-sm hover:shadow transition-all text-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+              Fetch Player Profile
+            </button>
+          </div>
+        )}
 
+        {/* Main Action Form Card */}
+        <div className="bg-white border border-slate-100 rounded-xl shadow-sm p-6 md:p-8">
           <form onSubmit={handleSubmit} className="space-y-6">
             {mode !== 'delete' ? (
               <>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="border-b border-slate-100 pb-4">
+                  <h2 className="text-xl font-bold text-slate-800">Player Profile Details</h2>
+                  <p className="text-xs text-slate-400 mt-1">Fields marked with * are required parameters.</p>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {/* Person ID */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">
                       Person ID *
                     </label>
                     <input
@@ -264,12 +295,14 @@ const PlayerCrudPage: React.FC<{ mode: 'insert' | 'update' | 'delete' }> = ({ mo
                       required
                       disabled={mode === 'update'}
                       maxLength={10}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100"
-                      placeholder="Max 10 characters"
+                      className="w-full border border-slate-200 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 bg-slate-50/50 transition-all text-slate-800 placeholder-slate-400 disabled:bg-slate-100 disabled:text-slate-400 disabled:border-slate-200"
+                      placeholder="e.g. P001"
                     />
                   </div>
+
+                  {/* Person Name */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">
                       Person Name *
                     </label>
                     <input
@@ -279,11 +312,14 @@ const PlayerCrudPage: React.FC<{ mode: 'insert' | 'update' | 'delete' }> = ({ mo
                       onChange={handleChange}
                       required={mode === 'insert'}
                       disabled={mode === 'update'}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100"
+                      className="w-full border border-slate-200 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 bg-slate-50/50 transition-all text-slate-800 placeholder-slate-400 disabled:bg-slate-100 disabled:text-slate-400 disabled:border-slate-200"
+                      placeholder="Enter full name"
                     />
                   </div>
+
+                  {/* Gender */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">
                       Gender *
                     </label>
                     <select
@@ -292,7 +328,7 @@ const PlayerCrudPage: React.FC<{ mode: 'insert' | 'update' | 'delete' }> = ({ mo
                       onChange={handleChange}
                       required={mode === 'insert'}
                       disabled={mode === 'update'}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100"
+                      className="w-full border border-slate-200 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 bg-slate-50/50 transition-all text-slate-800 disabled:bg-slate-100 disabled:text-slate-400 disabled:border-slate-200"
                     >
                       <option value="">Select Gender</option>
                       <option value="Male">Male</option>
@@ -300,8 +336,10 @@ const PlayerCrudPage: React.FC<{ mode: 'insert' | 'update' | 'delete' }> = ({ mo
                       <option value="Other">Other</option>
                     </select>
                   </div>
+
+                  {/* Date of Birth */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">
                       Date of Birth *
                     </label>
                     <input
@@ -311,11 +349,13 @@ const PlayerCrudPage: React.FC<{ mode: 'insert' | 'update' | 'delete' }> = ({ mo
                       onChange={handleChange}
                       required={mode === 'insert'}
                       disabled={mode === 'update'}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100"
+                      className="w-full border border-slate-200 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 bg-slate-50/50 transition-all text-slate-800 disabled:bg-slate-100 disabled:text-slate-400 disabled:border-slate-200"
                     />
                   </div>
+
+                  {/* Contact Number */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">
                       Contact Number * (10 digits)
                     </label>
                     <input
@@ -326,12 +366,14 @@ const PlayerCrudPage: React.FC<{ mode: 'insert' | 'update' | 'delete' }> = ({ mo
                       required={mode === 'insert'}
                       maxLength={10}
                       pattern="[0-9]{10}"
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      placeholder="1234567890"
+                      placeholder="e.g. 9876543210"
+                      className="w-full border border-slate-200 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 bg-slate-50/50 transition-all text-slate-800 placeholder-slate-400"
                     />
                   </div>
+
+                  {/* College Name */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">
                       College Name
                     </label>
                     <input
@@ -339,11 +381,14 @@ const PlayerCrudPage: React.FC<{ mode: 'insert' | 'update' | 'delete' }> = ({ mo
                       name="college_name"
                       value={formData.college_name}
                       onChange={handleChange}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      placeholder="Enter college affiliation"
+                      className="w-full border border-slate-200 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 bg-slate-50/50 transition-all text-slate-800 placeholder-slate-400"
                     />
                   </div>
+
+                  {/* Roles */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">
                       Roles
                     </label>
                     <input
@@ -352,12 +397,14 @@ const PlayerCrudPage: React.FC<{ mode: 'insert' | 'update' | 'delete' }> = ({ mo
                       value={formData.roles}
                       onChange={handleChange}
                       disabled={mode === 'insert' || mode === 'update'}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100"
-                      placeholder="Player (default)"
+                      className="w-full border border-slate-200 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 bg-slate-50/50 transition-all text-slate-800 placeholder-slate-400 disabled:bg-slate-100 disabled:text-slate-400 disabled:border-slate-200"
+                      placeholder="Player"
                     />
                   </div>
+
+                  {/* Height */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">
                       Height (cm) *
                     </label>
                     <input
@@ -368,11 +415,14 @@ const PlayerCrudPage: React.FC<{ mode: 'insert' | 'update' | 'delete' }> = ({ mo
                       required={mode === 'insert'}
                       min="0"
                       step="0.01"
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      placeholder="e.g. 178.5"
+                      className="w-full border border-slate-200 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 bg-slate-50/50 transition-all text-slate-800 placeholder-slate-400"
                     />
                   </div>
+
+                  {/* Weight */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">
                       Weight (kg) *
                     </label>
                     <input
@@ -383,18 +433,21 @@ const PlayerCrudPage: React.FC<{ mode: 'insert' | 'update' | 'delete' }> = ({ mo
                       required={mode === 'insert'}
                       min="0"
                       step="0.01"
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      placeholder="e.g. 68.4"
+                      className="w-full border border-slate-200 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 bg-slate-50/50 transition-all text-slate-800 placeholder-slate-400"
                     />
                   </div>
+
+                  {/* Blood Group */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">
                       Blood Group
                     </label>
                     <select
                       name="bloodgroup"
                       value={formData.bloodgroup}
                       onChange={handleChange}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="w-full border border-slate-200 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 bg-slate-50/50 transition-all text-slate-800"
                     >
                       <option value="">Select Blood Group</option>
                       <option value="A+">A+</option>
@@ -407,8 +460,10 @@ const PlayerCrudPage: React.FC<{ mode: 'insert' | 'update' | 'delete' }> = ({ mo
                       <option value="AB-">AB-</option>
                     </select>
                   </div>
+
+                  {/* Joining Year */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">
                       Joining Year *
                     </label>
                     <input
@@ -420,93 +475,113 @@ const PlayerCrudPage: React.FC<{ mode: 'insert' | 'update' | 'delete' }> = ({ mo
                       disabled={mode === 'update'}
                       min="2000"
                       max="2099"
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100"
+                      placeholder="e.g. 2026"
+                      className="w-full border border-slate-200 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 bg-slate-50/50 transition-all text-slate-800 placeholder-slate-400 disabled:bg-slate-100 disabled:text-slate-400 disabled:border-slate-200"
                     />
                   </div>
                 </div>
 
+                {/* Comparison Card Block */}
                 {mode === 'update' && oldData && (
-                  <div className="mt-6 p-4 bg-gray-50 rounded-lg">
-                    <h3 className="font-semibold text-gray-800 mb-3">Comparison (Old vs New)</h3>
-                    <div className="grid grid-cols-2 gap-4 text-sm">
-                      <div>
-                        <div className="font-medium text-gray-600 mb-1">Old Contact No:</div>
-                        <div className="text-gray-800">{oldData.contact_no}</div>
-                      </div>
-                      <div>
-                        <div className="font-medium text-gray-600 mb-1">New Contact No:</div>
-                        <div className="text-gray-800">{formData.contact_no}</div>
-                      </div>
-                      <div>
-                        <div className="font-medium text-gray-600 mb-1">Old College Name:</div>
-                        <div className="text-gray-800">{oldData.college_name || 'N/A'}</div>
-                      </div>
-                      <div>
-                        <div className="font-medium text-gray-600 mb-1">New College Name:</div>
-                        <div className="text-gray-800">{formData.college_name || 'N/A'}</div>
-                      </div>
-                      <div>
-                        <div className="font-medium text-gray-600 mb-1">Old Height (cm):</div>
-                        <div className="text-gray-800">{oldData.height}</div>
-                      </div>
-                      <div>
-                        <div className="font-medium text-gray-600 mb-1">New Height (cm):</div>
-                        <div className="text-gray-800">{formData.height}</div>
-                      </div>
-                      <div>
-                        <div className="font-medium text-gray-600 mb-1">Old Weight (kg):</div>
-                        <div className="text-gray-800">{oldData.weight}</div>
-                      </div>
-                      <div>
-                        <div className="font-medium text-gray-600 mb-1">New Weight (kg):</div>
-                        <div className="text-gray-800">{formData.weight}</div>
-                      </div>
-                      <div>
-                        <div className="font-medium text-gray-600 mb-1">Old Blood Group:</div>
-                        <div className="text-gray-800">{oldData.bloodgroup || 'N/A'}</div>
-                      </div>
-                      <div>
-                        <div className="font-medium text-gray-600 mb-1">New Blood Group:</div>
-                        <div className="text-gray-800">{formData.bloodgroup || 'N/A'}</div>
-                      </div>
+                  <div className="mt-8 border border-slate-100 bg-slate-50/50 rounded-xl p-5 shadow-sm">
+                    <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider mb-4 flex items-center gap-1.5">
+                      <svg className="w-4 h-4 text-indigo-600" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                      </svg>
+                      Proposed Changes (Old vs New)
+                    </h3>
+                    <div className="overflow-x-auto">
+                      <table className="min-w-full text-sm">
+                        <thead>
+                          <tr className="border-b border-slate-200/60 text-slate-400 font-semibold text-xs text-left">
+                            <th className="pb-2">Field</th>
+                            <th className="pb-2">Original Value</th>
+                            <th className="pb-2">New Proposed Value</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-100">
+                          {[
+                            { label: 'Contact Number', oldVal: oldData.contact_no, newVal: formData.contact_no },
+                            { label: 'College Name', oldVal: oldData.college_name || 'N/A', newVal: formData.college_name || 'N/A' },
+                            { label: 'Height (cm)', oldVal: oldData.height, newVal: formData.height },
+                            { label: 'Weight (kg)', oldVal: oldData.weight, newVal: formData.weight },
+                            { label: 'Blood Group', oldVal: oldData.bloodgroup || 'N/A', newVal: formData.bloodgroup || 'N/A' },
+                          ].map((item, index) => {
+                            const isChanged = String(item.oldVal) !== String(item.newVal);
+                            return (
+                              <tr key={index} className="hover:bg-slate-100/30">
+                                <td className="py-2.5 font-semibold text-slate-700">{item.label}</td>
+                                <td className="py-2.5 text-slate-400 font-mono">{String(item.oldVal)}</td>
+                                <td className={`py-2.5 font-semibold font-mono ${isChanged ? 'text-indigo-600' : 'text-slate-500'}`}>
+                                  {String(item.newVal)}
+                                  {isChanged && (
+                                    <span className="ml-2 px-1.5 py-0.5 rounded text-[10px] bg-indigo-50 text-indigo-600 font-bold font-sans">
+                                      Modified
+                                    </span>
+                                  )}
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
                     </div>
                   </div>
                 )}
               </>
             ) : (
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Player ID *
-                </label>
-                <input
-                  type="text"
-                  name="person_id"
-                  value={formData.person_id}
-                  onChange={handleChange}
-                  required
-                  placeholder="Enter Player ID to delete"
-                  maxLength={10}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
+              <div className="space-y-4">
+                <div className="border-b border-slate-100 pb-4">
+                  <h2 className="text-xl font-bold text-slate-800">Select Player to Delete</h2>
+                  <p className="text-xs text-slate-400 mt-1">This operation is destructive and cannot be undone.</p>
+                </div>
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">
+                    Player ID *
+                  </label>
+                  <input
+                    type="text"
+                    name="person_id"
+                    value={formData.person_id}
+                    onChange={handleChange}
+                    required
+                    placeholder="Enter unique Player ID (e.g. P001)"
+                    maxLength={10}
+                    className="w-full border border-slate-200 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-600 bg-slate-50/50 transition-all text-slate-800 placeholder-slate-400"
+                  />
+                </div>
               </div>
             )}
 
-            <div className="flex gap-4">
+            {/* Action Bar */}
+            <div className="flex gap-4 pt-4 border-t border-slate-100">
               <button
                 type="submit"
                 disabled={loading}
-                className={`px-6 py-2 rounded-lg font-medium transition-colors ${
+                className={`px-6 py-2.5 rounded-lg font-bold shadow-sm hover:shadow text-sm transition-all flex items-center justify-center min-w-[120px] ${
                   mode === 'delete'
-                    ? 'bg-red-600 text-white hover:bg-red-700'
-                    : 'bg-blue-600 text-white hover:bg-blue-700'
+                    ? 'bg-rose-600 hover:bg-rose-700 text-white focus:ring-4 focus:ring-rose-100'
+                    : 'bg-indigo-600 hover:bg-indigo-700 text-white focus:ring-4 focus:ring-indigo-100'
                 } disabled:opacity-50 disabled:cursor-not-allowed`}
               >
-                {loading ? 'Processing...' : mode === 'delete' ? 'Delete Player' : `Submit ${mode === 'insert' ? 'Insert' : 'Update'}`}
+                {loading ? (
+                  <span className="flex items-center gap-2">
+                    <svg className="animate-spin h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Processing...
+                  </span>
+                ) : mode === 'delete' ? (
+                  'Delete Player Profile'
+                ) : (
+                  `Submit Player ${mode === 'insert' ? 'Insert' : 'Update'}`
+                )}
               </button>
               <button
                 type="button"
                 onClick={() => navigate('/')}
-                className="px-6 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
+                className="px-6 py-2.5 border border-slate-200 hover:bg-slate-50 text-slate-600 rounded-lg font-semibold transition-colors text-sm"
               >
                 Cancel
               </button>

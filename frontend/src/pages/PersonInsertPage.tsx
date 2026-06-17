@@ -12,7 +12,6 @@ interface PersonFormData {
   contact_no: string;
   college_name: string;
   roles: string;
-  
   height: number | string;
   weight: number | string;
   bloodgroup: string;
@@ -53,7 +52,6 @@ const PersonInsertPage: React.FC = () => {
   const [personIdError, setPersonIdError] = useState<string>('');
   const [checkingPersonId, setCheckingPersonId] = useState(false);
 
-  
   useEffect(() => {
     if (formData.roles === 'Spectator') {
       fetchUpcomingTournaments();
@@ -86,51 +84,35 @@ const PersonInsertPage: React.FC = () => {
 
     try {
       const response = await axios.get(`${API_BASE_URL}/person/check/${encodeURIComponent(personId)}`);
-    
       console.log('Person ID check response:', response.data);
       if (response.data && response.data.exists === true) {
-
         console.log(`Person ID ${personId} EXISTS in database`);
         setPersonIdError(`Person ID already exists. Please enter another person ID.`);
         return true; 
       } else if (response.data && response.data.exists === false) {
-        
         console.log(`Person ID ${personId} is AVAILABLE (not in database)`);
         setPersonIdError(''); 
         return false; 
       } else {
-        
         console.error('Unexpected response format:', response.data);
         setPersonIdError('');
         return false;
       }
     } catch (error: any) {
       console.error('Error checking person ID:', error);
-      console.error('Error response:', error.response);
-      
       if (!error.response) {
-
         console.warn('Network error: Cannot reach backend server');
         setPersonIdError(''); 
         return false;
       }
-      
-    
       if (error.response.status === 404) {
-        console.error('API endpoint /api/person/check not found. Check backend server is running and routes are configured.');
-       
         setPersonIdError('');
         return false;
       }
-      
-      
       if (error.response.status >= 500) {
-        console.error('Server error while checking person ID');
         setPersonIdError('');
         return false;
       }
-      
-      
       setPersonIdError('');
       return false;
     } finally {
@@ -148,7 +130,6 @@ const PersonInsertPage: React.FC = () => {
           : value,
     }));
     
-   
     if (name === 'person_id') {
       setPersonIdError('');
     }
@@ -172,7 +153,6 @@ const PersonInsertPage: React.FC = () => {
       return;
     }
     
-   
     const idExists = await checkPersonId(formData.person_id);
     if (idExists) {
       setMessage({ type: 'error', text: 'Please enter another person ID as this ID already exists' });
@@ -188,7 +168,6 @@ const PersonInsertPage: React.FC = () => {
     setLoading(true);
     setMessage(null);
 
-    
     const idExists = await checkPersonId(formData.person_id);
     if (idExists) {
       setMessage({ type: 'error', text: 'Please enter another person ID as this ID already exists' });
@@ -198,7 +177,6 @@ const PersonInsertPage: React.FC = () => {
 
     try {
       if (formData.roles === 'Player') {
-        
         if (!formData.height || !formData.weight || !formData.joining_year) {
           setMessage({ type: 'error', text: 'Please fill all required player fields' });
           setLoading(false);
@@ -220,7 +198,6 @@ const PersonInsertPage: React.FC = () => {
         return;
       }
 
-      
       setTimeout(() => {
         setFormData({
           person_id: '',
@@ -250,72 +227,159 @@ const PersonInsertPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-8">
-      <div className="container mx-auto px-4 max-w-4xl">
-        <div className="mb-6">
+    <div className="min-h-screen bg-slate-50 py-10 font-sans antialiased text-slate-800">
+      <div className="container mx-auto px-6 max-w-3xl">
+        {/* Navigation & Header */}
+        <div className="mb-8">
           <button
             onClick={() => navigate('/')}
-            className="text-blue-600 hover:text-blue-800 font-medium mb-4"
+            className="group flex items-center gap-2 text-indigo-600 hover:text-indigo-800 font-semibold transition-colors mb-4 text-sm"
           >
-            ← Back to Home
+            <svg className="w-4 h-4 transform group-hover:-translate-x-0.5 transition-transform" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+            </svg>
+            Back to Dashboard
           </button>
-          <h1 className="text-4xl font-bold text-gray-800">
+          <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight">
             Register New Person
           </h1>
-          <p className="text-gray-600 mt-2">
-            Step {step === 'basic' ? '1' : '2'}: {step === 'basic' ? 'Basic Information' : 'Role Selection & Details'}
+          <p className="text-sm text-slate-500 mt-1">
+            Add a new spectator or player record to the tournament database.
           </p>
         </div>
 
+        {/* Premium Visual Stepper Component */}
+        <div className="mb-8 bg-white border border-slate-100 rounded-xl p-5 shadow-sm">
+          <div className="flex items-center justify-center max-w-md mx-auto">
+            {/* Step 1 */}
+            <div className="flex items-center gap-3">
+              <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold transition-all duration-200 ${
+                step === 'basic' 
+                  ? 'bg-indigo-600 text-white ring-4 ring-indigo-100' 
+                  : 'bg-emerald-500 text-white'
+              }`}>
+                {step === 'basic' ? '1' : (
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                  </svg>
+                )}
+              </div>
+              <span className={`text-sm font-bold ${step === 'basic' ? 'text-slate-800' : 'text-slate-400'}`}>
+                Basic Info
+              </span>
+            </div>
+
+            {/* Connector Line */}
+            <div className={`flex-1 h-0.5 mx-4 transition-all duration-300 ${
+              step === 'role' ? 'bg-emerald-500' : 'bg-slate-200'
+            }`} />
+
+            {/* Step 2 */}
+            <div className="flex items-center gap-3">
+              <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold transition-all duration-200 ${
+                step === 'role' 
+                  ? 'bg-indigo-600 text-white ring-4 ring-indigo-100' 
+                  : 'bg-slate-200 text-slate-400'
+              }`}>
+                2
+              </div>
+              <span className={`text-sm font-bold ${step === 'role' ? 'text-slate-800' : 'text-slate-400'}`}>
+                Role & Details
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* Notification Banner */}
         {message && (
           <div
-            className={`mb-6 p-4 rounded-lg ${
+            className={`mb-6 p-4 rounded-xl border flex items-start gap-3 text-sm ${
               message.type === 'success'
-                ? 'bg-green-100 text-green-800 border border-green-300'
-                : 'bg-red-100 text-red-800 border border-red-300'
+                ? 'bg-emerald-50 border-emerald-100 text-emerald-800'
+                : 'bg-rose-50 border-rose-100 text-rose-800'
             }`}
           >
-            {message.text}
+            {message.type === 'success' ? (
+              <svg className="w-5 h-5 text-emerald-500 shrink-0" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            ) : (
+              <svg className="w-5 h-5 text-rose-500 shrink-0" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+            )}
+            <div>
+              <p className="font-semibold">{message.type === 'success' ? 'Operation Successful' : 'Verification Error'}</p>
+              <p className="mt-0.5">{message.text}</p>
+            </div>
           </div>
         )}
 
-        <div className="bg-white rounded-lg shadow-md p-6">
+        {/* Form Panel Container */}
+        <div className="bg-white border border-slate-100 rounded-xl shadow-sm p-6 md:p-8">
           {step === 'basic' ? (
             <form onSubmit={handleBasicInfoSubmit} className="space-y-6">
-              <h2 className="text-2xl font-semibold text-gray-800 mb-4">Basic Information</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="border-b border-slate-100 pb-4">
+                <h2 className="text-xl font-bold text-slate-800">Basic Information</h2>
+                <p className="text-xs text-slate-400 mt-1">Please provide personal identification and contact info.</p>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Person ID */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">
                     Person ID *
                   </label>
-                  <input
-                    type="text"
-                    name="person_id"
-                    value={formData.person_id}
-                    onChange={handleChange}
-                    onBlur={handlePersonIdBlur}
-                    required
-                    maxLength={10}
-                    className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                      personIdError 
-                        ? 'border-red-500 bg-red-50' 
-                        : 'border-gray-300'
-                    }`}
-                    placeholder="Max 10 characters"
-                    disabled={checkingPersonId}
-                  />
+                  <div className="relative">
+                    <input
+                      type="text"
+                      name="person_id"
+                      value={formData.person_id}
+                      onChange={handleChange}
+                      onBlur={handlePersonIdBlur}
+                      required
+                      maxLength={10}
+                      className={`w-full border rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 bg-slate-50/50 transition-all text-slate-800 placeholder-slate-400 ${
+                        personIdError 
+                          ? 'border-rose-300 focus:ring-rose-500/20 focus:border-rose-500 bg-rose-50/20' 
+                          : formData.person_id && !personIdError && !checkingPersonId
+                            ? 'border-emerald-300 focus:ring-emerald-500/20 focus:border-emerald-500 bg-emerald-50/10'
+                            : 'border-slate-200 focus:ring-indigo-500/20 focus:border-indigo-600'
+                      }`}
+                      placeholder="e.g. P001"
+                      disabled={checkingPersonId}
+                    />
+                    {checkingPersonId && (
+                      <span className="absolute right-3 top-3.5 flex h-2 w-2">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
+                        <span className="relative inline-flex rounded-full h-2 w-2 bg-indigo-500"></span>
+                      </span>
+                    )}
+                  </div>
                   {checkingPersonId && (
-                    <p className="mt-1 text-sm text-gray-500">Checking availability...</p>
+                    <p className="mt-1.5 text-xs text-slate-400">Verifying unique ID availability...</p>
                   )}
                   {personIdError && (
-                    <p className="mt-1 text-sm text-red-600 font-medium">{personIdError}</p>
+                    <p className="mt-1.5 text-xs text-rose-600 font-semibold flex items-center gap-1">
+                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                      </svg>
+                      {personIdError}
+                    </p>
                   )}
                   {formData.person_id && !personIdError && !checkingPersonId && (
-                    <p className="mt-1 text-sm text-green-600">✓ Person ID is available</p>
+                    <p className="mt-1.5 text-xs text-emerald-600 font-semibold flex items-center gap-1">
+                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                      </svg>
+                      ID is available
+                    </p>
                   )}
                 </div>
+
+                {/* Person Name */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">
                     Person Name *
                   </label>
                   <input
@@ -324,11 +388,14 @@ const PersonInsertPage: React.FC = () => {
                     value={formData.person_name}
                     onChange={handleChange}
                     required
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="Enter full name"
+                    className="w-full border border-slate-200 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 bg-slate-50/50 transition-all text-slate-800 placeholder-slate-400"
                   />
                 </div>
+
+                {/* Gender */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">
                     Gender *
                   </label>
                   <select
@@ -336,7 +403,7 @@ const PersonInsertPage: React.FC = () => {
                     value={formData.gender}
                     onChange={handleChange}
                     required
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full border border-slate-200 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 bg-slate-50/50 transition-all text-slate-800"
                   >
                     <option value="">Select Gender</option>
                     <option value="Male">Male</option>
@@ -344,8 +411,10 @@ const PersonInsertPage: React.FC = () => {
                     <option value="Other">Other</option>
                   </select>
                 </div>
+
+                {/* Date of Birth */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">
                     Date of Birth *
                   </label>
                   <input
@@ -354,11 +423,13 @@ const PersonInsertPage: React.FC = () => {
                     value={formData.dob}
                     onChange={handleChange}
                     required
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full border border-slate-200 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 bg-slate-50/50 transition-all text-slate-800"
                   />
                 </div>
+
+                {/* Contact Number */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">
                     Contact Number * (10 digits)
                   </label>
                   <input
@@ -369,12 +440,14 @@ const PersonInsertPage: React.FC = () => {
                     required
                     maxLength={10}
                     pattern="[0-9]{10}"
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="1234567890"
+                    placeholder="e.g. 9876543210"
+                    className="w-full border border-slate-200 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 bg-slate-50/50 transition-all text-slate-800 placeholder-slate-400"
                   />
                 </div>
+
+                {/* College Name */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">
                     College Name
                   </label>
                   <input
@@ -382,21 +455,27 @@ const PersonInsertPage: React.FC = () => {
                     name="college_name"
                     value={formData.college_name}
                     onChange={handleChange}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="Enter college/affiliation"
+                    className="w-full border border-slate-200 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 bg-slate-50/50 transition-all text-slate-800 placeholder-slate-400"
                   />
                 </div>
               </div>
-              <div className="flex gap-4">
+
+              {/* Navigation Action Buttons */}
+              <div className="flex gap-4 pt-4 border-t border-slate-100">
                 <button
                   type="submit"
-                  className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium"
+                  className="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-bold shadow-sm hover:shadow transition-all text-sm flex items-center gap-2"
                 >
                   Next: Select Role
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                  </svg>
                 </button>
                 <button
                   type="button"
                   onClick={() => navigate('/')}
-                  className="px-6 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
+                  className="px-6 py-2.5 border border-slate-200 hover:bg-slate-50 text-slate-600 rounded-lg font-semibold transition-colors text-sm"
                 >
                   Cancel
                 </button>
@@ -404,27 +483,34 @@ const PersonInsertPage: React.FC = () => {
             </form>
           ) : (
             <form onSubmit={handleSubmit} className="space-y-6">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-2xl font-semibold text-gray-800">Role Selection & Details</h2>
+              <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+                <div>
+                  <h2 className="text-xl font-bold text-slate-800">Role Selection & Details</h2>
+                  <p className="text-xs text-slate-400 mt-1">Specify role details as Player or Tournament Spectator.</p>
+                </div>
                 <button
                   type="button"
                   onClick={() => setStep('basic')}
-                  className="text-sm text-blue-600 hover:text-blue-800"
+                  className="text-xs font-bold text-indigo-600 hover:text-indigo-800 flex items-center gap-1"
                 >
-                  ← Back to Basic Info
+                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+                  </svg>
+                  Edit Basic Info
                 </button>
               </div>
 
+              {/* Role Select */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Role *
+                <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">
+                  Role Type *
                 </label>
                 <select
                   name="roles"
                   value={formData.roles}
                   onChange={handleChange}
                   required
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full border border-slate-200 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 bg-slate-50/50 transition-all text-slate-800"
                 >
                   <option value="">Select Role</option>
                   <option value="Player">Player</option>
@@ -434,11 +520,14 @@ const PersonInsertPage: React.FC = () => {
 
               {/* Player Fields */}
               {formData.roles === 'Player' && (
-                <div className="border-t pt-6 space-y-4">
-                  <h3 className="text-lg font-semibold text-gray-800 mb-4">Player Information</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="border border-indigo-100 bg-indigo-50/10 rounded-xl p-5 space-y-6 animate-fadeIn">
+                  <div className="border-b border-indigo-100/50 pb-2">
+                    <h3 className="text-base font-bold text-indigo-950">Athletic Measurements</h3>
+                    <p className="text-xs text-indigo-400 mt-0.5">Physical specs for athlete logs.</p>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <label className="block text-xs font-bold uppercase tracking-wider text-indigo-900/60 mb-2">
                         Height (cm) *
                       </label>
                       <input
@@ -449,11 +538,12 @@ const PersonInsertPage: React.FC = () => {
                         required
                         min="0"
                         step="0.01"
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        placeholder="e.g. 182.5"
+                        className="w-full border border-slate-200 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 bg-white transition-all text-slate-800 placeholder-slate-400"
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <label className="block text-xs font-bold uppercase tracking-wider text-indigo-900/60 mb-2">
                         Weight (kg) *
                       </label>
                       <input
@@ -464,18 +554,19 @@ const PersonInsertPage: React.FC = () => {
                         required
                         min="0"
                         step="0.01"
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        placeholder="e.g. 74.2"
+                        className="w-full border border-slate-200 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 bg-white transition-all text-slate-800 placeholder-slate-400"
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <label className="block text-xs font-bold uppercase tracking-wider text-indigo-900/60 mb-2">
                         Blood Group
                       </label>
                       <select
                         name="bloodgroup"
                         value={formData.bloodgroup}
                         onChange={handleChange}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        className="w-full border border-slate-200 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 bg-white transition-all text-slate-800"
                       >
                         <option value="">Select Blood Group</option>
                         <option value="A+">A+</option>
@@ -489,7 +580,7 @@ const PersonInsertPage: React.FC = () => {
                       </select>
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <label className="block text-xs font-bold uppercase tracking-wider text-indigo-900/60 mb-2">
                         Joining Year *
                       </label>
                       <input
@@ -500,7 +591,8 @@ const PersonInsertPage: React.FC = () => {
                         required
                         min="2000"
                         max="2099"
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        placeholder="e.g. 2026"
+                        className="w-full border border-slate-200 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 bg-white transition-all text-slate-800 placeholder-slate-400"
                       />
                     </div>
                   </div>
@@ -509,12 +601,15 @@ const PersonInsertPage: React.FC = () => {
 
               {/* Spectator Fields */}
               {formData.roles === 'Spectator' && (
-                <div className="border-t pt-6 space-y-4">
-                  <h3 className="text-lg font-semibold text-gray-800 mb-4">Spectator Information</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Tournament * (Start Date &gt;= Today)
+                <div className="border border-indigo-100 bg-indigo-50/10 rounded-xl p-5 space-y-6 animate-fadeIn">
+                  <div className="border-b border-indigo-100/50 pb-2">
+                    <h3 className="text-base font-bold text-indigo-950">Spectator Pass Details</h3>
+                    <p className="text-xs text-indigo-400 mt-0.5">Link spectator to an upcoming tournament pass.</p>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="md:col-span-2">
+                      <label className="block text-xs font-bold uppercase tracking-wider text-indigo-900/60 mb-2">
+                        Select Tournament * (Upcoming Only)
                       </label>
                       {tournaments.length > 0 ? (
                         <select
@@ -522,7 +617,7 @@ const PersonInsertPage: React.FC = () => {
                           value={formData.tournament_id}
                           onChange={handleChange}
                           required
-                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          className="w-full border border-slate-200 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 bg-white transition-all text-slate-800 text-sm"
                         >
                           <option value="">Select Tournament</option>
                           {tournaments.map((tournament) => {
@@ -536,21 +631,24 @@ const PersonInsertPage: React.FC = () => {
                           })}
                         </select>
                       ) : (
-                        <div className="px-4 py-2 border border-yellow-300 bg-yellow-50 rounded-lg text-yellow-800">
-                          No upcoming tournaments available (start_date &gt;= today). Please create a tournament first.
+                        <div className="px-4 py-3 border border-amber-200 bg-amber-50 rounded-lg text-amber-800 text-xs flex gap-2">
+                          <svg className="w-4 h-4 text-amber-500 shrink-0" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                          </svg>
+                          No upcoming tournaments available. Please create a tournament first to enable registration.
                         </div>
                       )}
                     </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Pass Type *
+                    <div className="md:col-span-2">
+                      <label className="block text-xs font-bold uppercase tracking-wider text-indigo-900/60 mb-2">
+                        Pass Category Type *
                       </label>
                       <select
                         name="pass_type"
                         value={formData.pass_type}
                         onChange={handleChange}
                         required
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        className="w-full border border-slate-200 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 bg-white transition-all text-slate-800"
                       >
                         <option value="">Select Pass Type</option>
                         <option value="gold">Gold</option>
@@ -562,18 +660,29 @@ const PersonInsertPage: React.FC = () => {
                 </div>
               )}
 
-              <div className="flex gap-4">
+              {/* Submit Buttons */}
+              <div className="flex gap-4 pt-4 border-t border-slate-100">
                 <button
                   type="submit"
                   disabled={loading || (formData.roles === 'Spectator' && tournaments.length === 0)}
-                  className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-bold shadow-sm hover:shadow transition-all text-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center min-w-[120px]"
                 >
-                  {loading ? 'Creating...' : `Submit ${formData.roles || 'Registration'}`}
+                  {loading ? (
+                    <span className="flex items-center gap-2">
+                      <svg className="animate-spin h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      Creating...
+                    </span>
+                  ) : (
+                    `Submit ${formData.roles || 'Registration'}`
+                  )}
                 </button>
                 <button
                   type="button"
                   onClick={() => navigate('/')}
-                  className="px-6 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
+                  className="px-6 py-2.5 border border-slate-200 hover:bg-slate-50 text-slate-600 rounded-lg font-semibold transition-colors text-sm"
                 >
                   Cancel
                 </button>
@@ -587,4 +696,3 @@ const PersonInsertPage: React.FC = () => {
 };
 
 export default PersonInsertPage;
-
