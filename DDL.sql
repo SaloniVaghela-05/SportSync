@@ -372,7 +372,7 @@ RETURNS TABLE (
 ) AS $$
 BEGIN
     RETURN QUERY
-    SELECT o.member_id, org.member_name, org.contact_no, o.role
+    SELECT DISTINCT o.member_id, org.member_name, org.contact_no, o.role
     FROM OrganizeTournament o
     JOIN Organizer org ON o.member_id = org.member_id
     WHERE LOWER(o.department) = LOWER(dept_name);
