@@ -38,6 +38,8 @@ const PlayerCrudPage: React.FC<{ mode: 'insert' | 'update' | 'delete' }> = ({ mo
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [fetchId, setFetchId] = useState(id || '');
+  const [personIdError, setPersonIdError] = useState<string>('');
+  const [checkingPersonId, setCheckingPersonId] = useState(false);
 
   useEffect(() => {
     if (mode === 'update' && id) {
@@ -87,6 +89,39 @@ const PlayerCrudPage: React.FC<{ mode: 'insert' | 'update' | 'delete' }> = ({ mo
     }
   };
 
+  const checkPersonId = async (personId: string) => {
+    if (!personId || personId.trim() === '') {
+      setPersonIdError('');
+      return false;
+    }
+
+    setCheckingPersonId(true);
+    setPersonIdError('');
+
+    try {
+      const response = await axios.get(`${API_BASE_URL}/person/check/${encodeURIComponent(personId)}`);
+      if (response.data && response.data.exists === true) {
+        setPersonIdError(`Person ID already exists. Please enter another person ID.`);
+        return true; 
+      } else {
+        setPersonIdError(''); 
+        return false; 
+      }
+    } catch (error: any) {
+      console.error('Error checking person ID:', error);
+      setPersonIdError('');
+      return false;
+    } finally {
+      setCheckingPersonId(false);
+    }
+  };
+
+  const handlePersonIdBlur = async () => {
+    if (mode === 'insert' && formData.person_id && formData.person_id.trim() !== '') {
+      await checkPersonId(formData.person_id);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -94,6 +129,12 @@ const PlayerCrudPage: React.FC<{ mode: 'insert' | 'update' | 'delete' }> = ({ mo
 
     try {
       if (mode === 'insert') {
+        const idExists = await checkPersonId(formData.person_id);
+        if (idExists) {
+          setMessage({ type: 'error', text: 'Please enter another person ID as this ID already exists' });
+          setLoading(false);
+          return;
+        }
         const response = await axios.post(`${API_BASE_URL}/player`, formData);
         setMessage({ type: 'success', text: response.data.message || 'Player inserted successfully!' });
 
@@ -191,6 +232,10 @@ const PlayerCrudPage: React.FC<{ mode: 'insert' | 'update' | 'delete' }> = ({ mo
           ? (value === '' ? '' : (name === 'joining_year' ? parseInt(value, 10) : parseFloat(value)))
           : value,
     }));
+    
+    if (name === 'person_id') {
+      setPersonIdError('');
+    }
   };
 
   return (
@@ -287,17 +332,53 @@ const PlayerCrudPage: React.FC<{ mode: 'insert' | 'update' | 'delete' }> = ({ mo
                     <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">
                       Person ID *
                     </label>
-                    <input
-                      type="text"
-                      name="person_id"
-                      value={formData.person_id}
-                      onChange={handleChange}
-                      required
-                      disabled={mode === 'update'}
-                      maxLength={10}
-                      className="w-full border border-slate-200 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 bg-slate-50/50 transition-all text-slate-800 placeholder-slate-400 disabled:bg-slate-100 disabled:text-slate-400 disabled:border-slate-200"
-                      placeholder="e.g. P001"
-                    />
+                    <div className="relative">
+                      <input
+                        type="text"
+                        name="person_id"
+                        value={formData.person_id}
+                        onChange={handleChange}
+                        onBlur={handlePersonIdBlur}
+                        required
+                        disabled={mode === 'update' || checkingPersonId}
+                        maxLength={10}
+                        className={`w-full border rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 bg-slate-50/50 transition-all text-slate-800 placeholder-slate-400 ${
+                          mode === 'update'
+                            ? 'bg-slate-100 text-slate-400 border-slate-200'
+                            : personIdError
+                              ? 'border-rose-300 focus:ring-rose-500/20 focus:border-rose-500 bg-rose-50/20'
+                              : formData.person_id && !personIdError && !checkingPersonId
+                                ? 'border-emerald-300 focus:ring-emerald-500/20 focus:border-emerald-500 bg-emerald-50/10'
+                                : 'border-slate-200 focus:ring-indigo-500/20 focus:border-indigo-600'
+                        }`}
+                        placeholder="e.g. P001"
+                      />
+                      {mode === 'insert' && checkingPersonId && (
+                        <span className="absolute right-3 top-3.5 flex h-2 w-2">
+                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
+                          <span className="relative inline-flex rounded-full h-2 w-2 bg-indigo-500"></span>
+                        </span>
+                      )}
+                    </div>
+                    {mode === 'insert' && checkingPersonId && (
+                      <p className="mt-1.5 text-xs text-slate-400">Verifying unique ID availability...</p>
+                    )}
+                    {mode === 'insert' && personIdError && (
+                      <p className="mt-1.5 text-xs text-rose-600 font-semibold flex items-center gap-1">
+                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                        </svg>
+                        {personIdError}
+                      </p>
+                    )}
+                    {mode === 'insert' && formData.person_id && !personIdError && !checkingPersonId && (
+                      <p className="mt-1.5 text-xs text-emerald-600 font-semibold flex items-center gap-1">
+                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                        </svg>
+                        ID is available
+                      </p>
+                    )}
                   </div>
 
                   {/* Person Name */}
