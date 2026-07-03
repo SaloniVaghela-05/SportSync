@@ -2,6 +2,7 @@
 
 A premium, full-stack database application designed to administer, query, and analyze sports tournaments, teams, matches, and participant schedules. Built with a modern **SaaS Dashboard layout** utilizing **React**, **TypeScript**, **Tailwind CSS**, **Node.js/Express**, and **PostgreSQL**.
 
+LIVE DEMO : https://sportsync.salonii.me
 ---
 
 ## 📸 Application Showcase
