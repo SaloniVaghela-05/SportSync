@@ -14,16 +14,26 @@ const ReportViewPage: React.FC<ReportViewPageProps> = ({ reportType }) => {
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
+  const [selectedDept, setSelectedDept] = useState('Logistics');
+
+  const departments = [
+    'Logistics', 'Operations', 'Marketing', 'Finance', 
+    'Refereeing', 'Medical', 'Hospitality', 'Technical', 'Volunteers'
+  ];
 
   useEffect(() => {
     fetchReport();
-  }, [reportType]);
+  }, [reportType, selectedDept]);
 
   const fetchReport = async () => {
     setLoading(true);
     setError(null);
     try {
-      const response = await axios.get(`${API_BASE_URL}/report/${reportType}`);
+      let url = `${API_BASE_URL}/report/${reportType}`;
+      if (reportType === 'multidept-organizers') {
+        url += `?department=${encodeURIComponent(selectedDept)}`;
+      }
+      const response = await axios.get(url);
       setData(response.data);
     } catch (err: any) {
       setError(err.response?.data?.error || 'Failed to fetch report');
@@ -35,8 +45,8 @@ const ReportViewPage: React.FC<ReportViewPageProps> = ({ reportType }) => {
   const getReportInfo = () => {
     const reportInfoMap: Record<string, { title: string; description: string }> = {
       'multidept-organizers': {
-        title: 'Q22 - Multi-Department Organizers',
-        description: 'Organizers who worked in both Logistics and Marketing departments.',
+        title: 'Organizers by Department',
+        description: 'List of all organizers assigned to a specific tournament department.',
       },
       'fall-undefeated': {
         title: 'Q30 - Fall Undefeated Teams',
@@ -83,24 +93,45 @@ const ReportViewPage: React.FC<ReportViewPageProps> = ({ reportType }) => {
             <p className="text-sm text-slate-500 mt-1">{reportInfo.description}</p>
           </div>
 
-          {/* Action Area */}
-          {!loading && !error && data && (
-            <div className="flex items-center gap-4 bg-white border border-slate-100 rounded-xl p-3 shadow-sm w-fit self-end">
-              <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider pl-2">
-                Total Records: <strong className="text-slate-900 font-bold ml-1">{data.count || 0}</strong>
-              </span>
-              <div className="h-4 w-px bg-slate-200" />
-              <button
-                onClick={fetchReport}
-                className="px-4 py-2 bg-indigo-650 hover:bg-indigo-750 text-indigo-650 font-bold text-xs bg-indigo-50 hover:bg-indigo-100 border border-indigo-100/50 rounded-lg transition-colors flex items-center gap-1.5"
-              >
-                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 7.89H18" />
-                </svg>
-                Refresh Data
-              </button>
-            </div>
-          )}
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 self-end">
+            {reportType === 'multidept-organizers' && (
+              <div className="flex items-center gap-3 bg-white border border-slate-100 rounded-xl p-2.5 shadow-sm">
+                <label className="text-xs font-bold uppercase tracking-wider text-slate-500 pl-1">
+                  Department:
+                </label>
+                <select
+                  value={selectedDept}
+                  onChange={(e) => setSelectedDept(e.target.value)}
+                  className="border border-slate-200 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 text-sm font-semibold bg-slate-50/50 text-slate-800 transition-all cursor-pointer"
+                >
+                  {departments.map((dept) => (
+                    <option key={dept} value={dept}>
+                      {dept}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+
+            {/* Action Area */}
+            {!loading && !error && data && (
+              <div className="flex items-center gap-4 bg-white border border-slate-100 rounded-xl p-3 shadow-sm w-fit">
+                <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider pl-2">
+                  Total Records: <strong className="text-slate-900 font-bold ml-1">{data.count || 0}</strong>
+                </span>
+                <div className="h-4 w-px bg-slate-200" />
+                <button
+                  onClick={fetchReport}
+                  className="px-4 py-2 bg-indigo-650 hover:bg-indigo-750 text-indigo-650 font-bold text-xs bg-indigo-50 hover:bg-indigo-100 border border-indigo-100/50 rounded-lg transition-colors flex items-center gap-1.5"
+                >
+                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 7.89H18" />
+                  </svg>
+                  Refresh Data
+                </button>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Loading State Overlay */}

@@ -360,3 +360,21 @@ CREATE TABLE Result (
         ON DELETE CASCADE
         ON UPDATE CASCADE
 );
+
+
+-- Helper Stored Function to retrieve organizers by department
+CREATE OR REPLACE FUNCTION get_organizers_by_department(dept_name VARCHAR)
+RETURNS TABLE (
+    member_id VARCHAR(10),
+    member_name VARCHAR(100),
+    contact_no VARCHAR(10),
+    role VARCHAR(30)
+) AS $$
+BEGIN
+    RETURN QUERY
+    SELECT o.member_id, org.member_name, org.contact_no, o.role
+    FROM OrganizeTournament o
+    JOIN Organizer org ON o.member_id = org.member_id
+    WHERE LOWER(o.department) = LOWER(dept_name);
+END;
+$$ LANGUAGE plpgsql;

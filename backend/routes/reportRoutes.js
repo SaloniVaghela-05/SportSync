@@ -5,29 +5,23 @@ const { query } = require('../db/db');
 
 router.get('/multidept-organizers', async (req, res) => {
   try {
+    const { department } = req.query;
+    const dept = department || 'Logistics';
+
     const reportQuery = `
-      SELECT DISTINCT o.member_id, org.member_name, org.contact_no
-      FROM OrganizeTournament o
-      JOIN Organizer org ON o.member_id = org.member_id
-      WHERE LOWER(o.department) = 'logistics'
-      INTERSECT
-      SELECT DISTINCT o.member_id, org.member_name, org.contact_no
-      FROM OrganizeTournament o
-      JOIN Organizer org ON o.member_id = org.member_id
-      WHERE LOWER(o.department) = 'marketing'
-      ORDER BY member_id;
+      SELECT * FROM get_organizers_by_department($1);
     `;
 
-    const result = await query(reportQuery);
+    const result = await query(reportQuery, [dept]);
 
     res.json({
-      query: 'Q22 - Multi-Department Organizers',
-      description: 'Organizers who worked in both Logistics and Marketing departments',
+      query: `Organizers by Department: ${dept}`,
+      description: `Organizers who worked in the ${dept} department`,
       count: result.rows.length,
       data: result.rows,
     });
   } catch (error) {
-    console.error('Error fetching multi-dept organizers report:', error);
+    console.error('Error fetching organizers by department:', error);
     res.status(500).json({
       error: 'Failed to fetch report',
       details: error.message,
