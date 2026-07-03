@@ -97,7 +97,7 @@ const HomePage = () => {
   };
 
   const managementQueries = [
-    { title: 'Register Person', path: '/insert/person', description: 'Register a new person (Player or Spectator) with conditional forms.', icon: Icons.registerPerson },
+    { title: 'Register to Attend', path: '/insert/person', description: 'Register as a spectator to attend upcoming tournaments.', icon: Icons.registerPerson },
     { title: 'Create Tournament', path: '/insert/tournament', description: 'Create a new tournament in the database system.', icon: Icons.createTournament },
     { title: 'Insert Player', path: '/insert/player', description: 'Insert a new player with specialized information.', icon: Icons.insertPlayer },
     { title: 'Update Player', path: '/update/player', description: 'Modify existing player profiles, height, weight, etc.', icon: Icons.updatePlayer },

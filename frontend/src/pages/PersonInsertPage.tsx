@@ -38,7 +38,7 @@ const PersonInsertPage: React.FC = () => {
     dob: '',
     contact_no: '',
     college_name: '',
-    roles: '',
+    roles: 'Spectator',
     height: '',
     weight: '',
     bloodgroup: '',
@@ -53,10 +53,8 @@ const PersonInsertPage: React.FC = () => {
   const [checkingPersonId, setCheckingPersonId] = useState(false);
 
   useEffect(() => {
-    if (formData.roles === 'Spectator') {
-      fetchUpcomingTournaments();
-    }
-  }, [formData.roles]);
+    fetchUpcomingTournaments();
+  }, []);
 
   const fetchUpcomingTournaments = async () => {
     try {
@@ -176,27 +174,13 @@ const PersonInsertPage: React.FC = () => {
     }
 
     try {
-      if (formData.roles === 'Player') {
-        if (!formData.height || !formData.weight || !formData.joining_year) {
-          setMessage({ type: 'error', text: 'Please fill all required player fields' });
-          setLoading(false);
-          return;
-        }
-        const response = await axios.post(`${API_BASE_URL}/person/player`, formData);
-        setMessage({ type: 'success', text: response.data.message || 'Player created successfully!' });
-      } else if (formData.roles === 'Spectator') {
-        if (!formData.tournament_id || !formData.pass_type) {
-          setMessage({ type: 'error', text: 'Please select tournament and pass type' });
-          setLoading(false);
-          return;
-        }
-        const response = await axios.post(`${API_BASE_URL}/person/spectator`, formData);
-        setMessage({ type: 'success', text: response.data.message || 'Spectator created successfully!' });
-      } else {
-        setMessage({ type: 'error', text: 'Please select a role' });
+      if (!formData.tournament_id || !formData.pass_type) {
+        setMessage({ type: 'error', text: 'Please select tournament and pass type' });
         setLoading(false);
         return;
       }
+      const response = await axios.post(`${API_BASE_URL}/person/spectator`, formData);
+      setMessage({ type: 'success', text: response.data.message || 'Spectator created successfully!' });
 
       setTimeout(() => {
         setFormData({
@@ -206,7 +190,7 @@ const PersonInsertPage: React.FC = () => {
           dob: '',
           contact_no: '',
           college_name: '',
-          roles: '',
+          roles: 'Spectator',
           height: '',
           weight: '',
           bloodgroup: '',
@@ -241,10 +225,10 @@ const PersonInsertPage: React.FC = () => {
             Back to Dashboard
           </button>
           <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight">
-            Register New Person
+            Register to Attend
           </h1>
           <p className="text-sm text-slate-500 mt-1">
-            Add a new spectator or player record to the tournament database.
+            Register as a spectator to attend upcoming tournaments.
           </p>
         </div>
 
@@ -284,7 +268,7 @@ const PersonInsertPage: React.FC = () => {
                 2
               </div>
               <span className={`text-sm font-bold ${step === 'role' ? 'text-slate-800' : 'text-slate-400'}`}>
-                Role & Details
+                Pass Details
               </span>
             </div>
           </div>
@@ -467,7 +451,7 @@ const PersonInsertPage: React.FC = () => {
                   type="submit"
                   className="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-bold shadow-sm hover:shadow transition-all text-sm flex items-center gap-2"
                 >
-                  Next: Select Role
+                  Next: Pass Details
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
                   </svg>
@@ -485,8 +469,8 @@ const PersonInsertPage: React.FC = () => {
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="flex items-center justify-between border-b border-slate-100 pb-4">
                 <div>
-                  <h2 className="text-xl font-bold text-slate-800">Role Selection & Details</h2>
-                  <p className="text-xs text-slate-400 mt-1">Specify role details as Player or Tournament Spectator.</p>
+                  <h2 className="text-xl font-bold text-slate-800">Pass Details</h2>
+                  <p className="text-xs text-slate-400 mt-1">Select tournament and pass details.</p>
                 </div>
                 <button
                   type="button"
@@ -500,171 +484,70 @@ const PersonInsertPage: React.FC = () => {
                 </button>
               </div>
 
-              {/* Role Select */}
-              <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">
-                  Role Type *
-                </label>
-                <select
-                  name="roles"
-                  value={formData.roles}
-                  onChange={handleChange}
-                  required
-                  className="w-full border border-slate-200 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 bg-slate-50/50 transition-all text-slate-800"
-                >
-                  <option value="">Select Role</option>
-                  <option value="Player">Player</option>
-                  <option value="Spectator">Spectator</option>
-                </select>
-              </div>
-
-              {/* Player Fields */}
-              {formData.roles === 'Player' && (
-                <div className="border border-indigo-100 bg-indigo-50/10 rounded-xl p-5 space-y-6 animate-fadeIn">
-                  <div className="border-b border-indigo-100/50 pb-2">
-                    <h3 className="text-base font-bold text-indigo-950">Athletic Measurements</h3>
-                    <p className="text-xs text-indigo-400 mt-0.5">Physical specs for athlete logs.</p>
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                      <label className="block text-xs font-bold uppercase tracking-wider text-indigo-900/60 mb-2">
-                        Height (cm) *
-                      </label>
-                      <input
-                        type="number"
-                        name="height"
-                        value={formData.height}
-                        onChange={handleChange}
-                        required
-                        min="0"
-                        step="0.01"
-                        placeholder="e.g. 182.5"
-                        className="w-full border border-slate-200 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 bg-white transition-all text-slate-800 placeholder-slate-400"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-bold uppercase tracking-wider text-indigo-900/60 mb-2">
-                        Weight (kg) *
-                      </label>
-                      <input
-                        type="number"
-                        name="weight"
-                        value={formData.weight}
-                        onChange={handleChange}
-                        required
-                        min="0"
-                        step="0.01"
-                        placeholder="e.g. 74.2"
-                        className="w-full border border-slate-200 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 bg-white transition-all text-slate-800 placeholder-slate-400"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-bold uppercase tracking-wider text-indigo-900/60 mb-2">
-                        Blood Group
-                      </label>
-                      <select
-                        name="bloodgroup"
-                        value={formData.bloodgroup}
-                        onChange={handleChange}
-                        className="w-full border border-slate-200 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 bg-white transition-all text-slate-800"
-                      >
-                        <option value="">Select Blood Group</option>
-                        <option value="A+">A+</option>
-                        <option value="A-">A-</option>
-                        <option value="B+">B+</option>
-                        <option value="B-">B-</option>
-                        <option value="O+">O+</option>
-                        <option value="O-">O-</option>
-                        <option value="AB+">AB+</option>
-                        <option value="AB-">AB-</option>
-                      </select>
-                    </div>
-                    <div>
-                      <label className="block text-xs font-bold uppercase tracking-wider text-indigo-900/60 mb-2">
-                        Joining Year *
-                      </label>
-                      <input
-                        type="number"
-                        name="joining_year"
-                        value={formData.joining_year}
-                        onChange={handleChange}
-                        required
-                        min="2000"
-                        max="2099"
-                        placeholder="e.g. 2026"
-                        className="w-full border border-slate-200 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 bg-white transition-all text-slate-800 placeholder-slate-400"
-                      />
-                    </div>
-                  </div>
-                </div>
-              )}
-
               {/* Spectator Fields */}
-              {formData.roles === 'Spectator' && (
-                <div className="border border-indigo-100 bg-indigo-50/10 rounded-xl p-5 space-y-6 animate-fadeIn">
-                  <div className="border-b border-indigo-100/50 pb-2">
-                    <h3 className="text-base font-bold text-indigo-950">Spectator Pass Details</h3>
-                    <p className="text-xs text-indigo-400 mt-0.5">Link spectator to an upcoming tournament pass.</p>
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="md:col-span-2">
-                      <label className="block text-xs font-bold uppercase tracking-wider text-indigo-900/60 mb-2">
-                        Select Tournament * (Upcoming Only)
-                      </label>
-                      {tournaments.length > 0 ? (
-                        <select
-                          name="tournament_id"
-                          value={formData.tournament_id}
-                          onChange={handleChange}
-                          required
-                          className="w-full border border-slate-200 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 bg-white transition-all text-slate-800 text-sm"
-                        >
-                          <option value="">Select Tournament</option>
-                          {tournaments.map((tournament) => {
-                            const startDate = new Date(tournament.start_date).toLocaleDateString();
-                            const isUpcoming = new Date(tournament.start_date) > new Date();
-                            return (
-                              <option key={tournament.tournament_id} value={tournament.tournament_id}>
-                                ID: {tournament.tournament_id} | Start: {startDate} | {tournament.tournament_year} - {tournament.season} {isUpcoming ? '(Upcoming)' : '(Ongoing)'}
-                              </option>
-                            );
-                          })}
-                        </select>
-                      ) : (
-                        <div className="px-4 py-3 border border-amber-200 bg-amber-50 rounded-lg text-amber-800 text-xs flex gap-2">
-                          <svg className="w-4 h-4 text-amber-500 shrink-0" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                          </svg>
-                          No upcoming tournaments available. Please create a tournament first to enable registration.
-                        </div>
-                      )}
-                    </div>
-                    <div className="md:col-span-2">
-                      <label className="block text-xs font-bold uppercase tracking-wider text-indigo-900/60 mb-2">
-                        Pass Category Type *
-                      </label>
+              <div className="border border-indigo-100 bg-indigo-50/10 rounded-xl p-5 space-y-6 animate-fadeIn">
+                <div className="border-b border-indigo-100/50 pb-2">
+                  <h3 className="text-base font-bold text-indigo-950">Spectator Pass Details</h3>
+                  <p className="text-xs text-indigo-400 mt-0.5">Link spectator to an upcoming tournament pass.</p>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="md:col-span-2">
+                    <label className="block text-xs font-bold uppercase tracking-wider text-indigo-900/60 mb-2">
+                      Select Tournament * (Upcoming Only)
+                    </label>
+                    {tournaments.length > 0 ? (
                       <select
-                        name="pass_type"
-                        value={formData.pass_type}
+                        name="tournament_id"
+                        value={formData.tournament_id}
                         onChange={handleChange}
                         required
-                        className="w-full border border-slate-200 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 bg-white transition-all text-slate-800"
+                        className="w-full border border-slate-200 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 bg-white transition-all text-slate-800 text-sm"
                       >
-                        <option value="">Select Pass Type</option>
-                        <option value="gold">Gold</option>
-                        <option value="silver">Silver</option>
-                        <option value="regular">Regular</option>
+                        <option value="">Select Tournament</option>
+                        {tournaments.map((tournament) => {
+                          const startDate = new Date(tournament.start_date).toLocaleDateString();
+                          const isUpcoming = new Date(tournament.start_date) > new Date();
+                          return (
+                            <option key={tournament.tournament_id} value={tournament.tournament_id}>
+                              ID: {tournament.tournament_id} | Start: {startDate} | {tournament.tournament_year} - {tournament.season} {isUpcoming ? '(Upcoming)' : '(Ongoing)'}
+                            </option>
+                          );
+                        })}
                       </select>
-                    </div>
+                    ) : (
+                      <div className="px-4 py-3 border border-amber-200 bg-amber-50 rounded-lg text-amber-800 text-xs flex gap-2">
+                        <svg className="w-4 h-4 text-amber-500 shrink-0" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                        </svg>
+                        No upcoming tournaments available. Please create a tournament first to enable registration.
+                      </div>
+                    )}
+                  </div>
+                  <div className="md:col-span-2">
+                    <label className="block text-xs font-bold uppercase tracking-wider text-indigo-900/60 mb-2">
+                      Pass Category Type *
+                    </label>
+                    <select
+                      name="pass_type"
+                      value={formData.pass_type}
+                      onChange={handleChange}
+                      required
+                      className="w-full border border-slate-200 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 bg-white transition-all text-slate-800"
+                    >
+                      <option value="">Select Pass Type</option>
+                      <option value="gold">Gold</option>
+                      <option value="silver">Silver</option>
+                      <option value="regular">Regular</option>
+                    </select>
                   </div>
                 </div>
-              )}
+              </div>
 
               {/* Submit Buttons */}
               <div className="flex gap-4 pt-4 border-t border-slate-100">
                 <button
                   type="submit"
-                  disabled={loading || (formData.roles === 'Spectator' && tournaments.length === 0)}
+                  disabled={loading || tournaments.length === 0}
                   className="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-bold shadow-sm hover:shadow transition-all text-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center min-w-[120px]"
                 >
                   {loading ? (
@@ -673,10 +556,10 @@ const PersonInsertPage: React.FC = () => {
                         <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                         <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                       </svg>
-                      Creating...
+                      Registering...
                     </span>
                   ) : (
-                    `Submit ${formData.roles || 'Registration'}`
+                    'Submit Registration'
                   )}
                 </button>
                 <button
