@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import ReportTable from '../components/ReportTable';
 
-const API_BASE_URL = 'http://localhost:5000/api';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
 
 interface ReportViewPageProps {
   reportType: 'multidept-organizers' | 'fall-undefeated' | 'top-scoring-players' | 'team-win-statistics' | 'tournament-participants';
