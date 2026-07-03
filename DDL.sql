@@ -11,7 +11,7 @@ CREATE TABLE Person (
 CREATE TABLE Tournament (
     tournament_id VARCHAR(10) PRIMARY KEY,
     tournament_year INT NOT NULL
-        CHECK (tournament_year BETWEEN 2000 AND 2025),
+        CHECK (tournament_year BETWEEN 2000 AND 2035),
 
     season VARCHAR(20)
         CHECK (LOWER(season) IN ('fall' , 'spring')),
@@ -112,7 +112,7 @@ CREATE TABLE Player (
     height DECIMAL(5,2) NOT NULL CHECK (height >= 0),
     weight DECIMAL(5,2) NOT NULL CHECK (weight >= 0),
     bloodgroup VARCHAR(5) CHECK (bloodgroup IN ('A+', 'A-', 'B+', 'B-', 'O+', 'O-', 'AB+', 'AB-')),
-    joining_year INT NOT NULL CHECK (joining_year BETWEEN 2000 AND 2025),
+    joining_year INT NOT NULL CHECK (joining_year BETWEEN 2000 AND 2035),
     FOREIGN KEY (player_id) REFERENCES Person(person_id)
         ON DELETE CASCADE
         ON UPDATE CASCADE
