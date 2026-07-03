@@ -49,7 +49,7 @@ const ReportViewPage: React.FC<ReportViewPageProps> = ({ reportType }) => {
         description: 'List of all organizers assigned to a specific tournament department.',
       },
       'fall-undefeated': {
-        title: 'Q30 - Fall Undefeated Teams',
+        title: 'Fall Undefeated Teams',
         description: 'Teams with a win outcome in every Fall match.',
       },
       'top-scoring-players': {

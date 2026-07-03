@@ -60,7 +60,7 @@ router.get('/fall-undefeated', async (req, res) => {
     const result = await query(reportQuery);
 
     res.json({
-      query: 'Q30 - Fall Undefeated Teams',
+      query: 'Fall Undefeated Teams',
       description: 'Teams with a win outcome in every Fall match',
       count: result.rows.length,
       data: result.rows,
