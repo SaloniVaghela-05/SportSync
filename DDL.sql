@@ -368,13 +368,15 @@ RETURNS TABLE (
     member_id VARCHAR(10),
     member_name VARCHAR(100),
     contact_no VARCHAR(10),
-    role VARCHAR(30)
+    role TEXT
 ) AS $$
 BEGIN
     RETURN QUERY
-    SELECT DISTINCT o.member_id, org.member_name, org.contact_no, o.role
+    SELECT o.member_id, org.member_name, org.contact_no, STRING_AGG(DISTINCT o.role, ', ')
     FROM OrganizeTournament o
     JOIN Organizer org ON o.member_id = org.member_id
-    WHERE LOWER(o.department) = LOWER(dept_name);
+    WHERE LOWER(o.department) = LOWER(dept_name)
+    GROUP BY o.member_id, org.member_name, org.contact_no
+    ORDER BY o.member_id;
 END;
 $$ LANGUAGE plpgsql;
