@@ -15,6 +15,7 @@ const ReportViewPage: React.FC<ReportViewPageProps> = ({ reportType }) => {
   const [data, setData] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
   const [selectedDept, setSelectedDept] = useState('Logistics');
+  const [participantsFilter, setParticipantsFilter] = useState<'players' | 'spectators' | 'both'>('players');
 
   const departments = [
     'Logistics', 'Operations', 'Marketing', 'Finance', 
@@ -23,7 +24,7 @@ const ReportViewPage: React.FC<ReportViewPageProps> = ({ reportType }) => {
 
   useEffect(() => {
     fetchReport();
-  }, [reportType, selectedDept]);
+  }, [reportType, selectedDept, participantsFilter]);
 
   const fetchReport = async () => {
     setLoading(true);
@@ -32,6 +33,8 @@ const ReportViewPage: React.FC<ReportViewPageProps> = ({ reportType }) => {
       let url = `${API_BASE_URL}/report/${reportType}`;
       if (reportType === 'multidept-organizers') {
         url += `?department=${encodeURIComponent(selectedDept)}`;
+      } else if (reportType === 'tournament-participants') {
+        url += `?filter=${participantsFilter}`;
       }
       const response = await axios.get(url);
       setData(response.data);
@@ -109,6 +112,23 @@ const ReportViewPage: React.FC<ReportViewPageProps> = ({ reportType }) => {
                       {dept}
                     </option>
                   ))}
+                </select>
+              </div>
+            )}
+
+            {reportType === 'tournament-participants' && (
+              <div className="flex items-center gap-3 bg-white border border-slate-100 rounded-xl p-2.5 shadow-sm">
+                <label className="text-xs font-bold uppercase tracking-wider text-slate-500 pl-1">
+                  View List:
+                </label>
+                <select
+                  value={participantsFilter}
+                  onChange={(e) => setParticipantsFilter(e.target.value as any)}
+                  className="border border-slate-200 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 text-sm font-semibold bg-slate-50/50 text-slate-800 transition-all cursor-pointer"
+                >
+                  <option value="players">Players Only</option>
+                  <option value="spectators">Spectators Only</option>
+                  <option value="both">Both Players & Spectators</option>
                 </select>
               </div>
             )}

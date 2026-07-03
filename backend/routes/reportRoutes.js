@@ -149,29 +149,93 @@ router.get('/team-win-statistics', async (req, res) => {
 
 router.get('/tournament-participants', async (req, res) => {
   try {
-    const reportQuery = `
-      SELECT DISTINCT
-        tour.tournament_id,
-        tour.tournament_year,
-        tour.season,
-        p.person_id,
-        p.person_name,
-        pl.height,
-        pl.weight,
-        p.college_name
-      FROM Tournament tour
-      JOIN Match m ON tour.tournament_id = m.tournament_id
-      JOIN PlayerPlaysMatch ppm ON m.match_id = ppm.match_id
-      JOIN Player pl ON ppm.player_id = pl.player_id
-      JOIN Person p ON pl.player_id = p.person_id
-      ORDER BY tour.tournament_id, p.person_name;
-    `;
+    const { filter } = req.query; // 'players', 'spectators', or 'both'
+    const activeFilter = filter || 'players';
+
+    let reportQuery = '';
+    
+    if (activeFilter === 'players') {
+      reportQuery = `
+        SELECT DISTINCT
+          tour.tournament_id,
+          tour.tournament_year,
+          tour.season,
+          p.person_id,
+          p.person_name,
+          'Player' AS role,
+          p.college_name,
+          CONCAT('H: ', pl.height, 'cm, W: ', pl.weight, 'kg') AS details
+        FROM Tournament tour
+        JOIN Match m ON tour.tournament_id = m.tournament_id
+        JOIN PlayerPlaysMatch ppm ON m.match_id = ppm.match_id
+        JOIN Player pl ON ppm.player_id = pl.player_id
+        JOIN Person p ON pl.player_id = p.person_id
+        ORDER BY tour.tournament_id, p.person_id;
+      `;
+    } else if (activeFilter === 'spectators') {
+      reportQuery = `
+        SELECT DISTINCT
+          tour.tournament_id,
+          tour.tournament_year,
+          tour.season,
+          p.person_id,
+          p.person_name,
+          'Spectator' AS role,
+          p.college_name,
+          CONCAT('Pass Type: ', UPPER(sp.pass_type)) AS details
+        FROM Tournament tour
+        JOIN SpectatorPass sp ON tour.tournament_id = sp.tournament_id
+        JOIN Person p ON sp.spectator_id = p.person_id
+        ORDER BY tour.tournament_id, p.person_id;
+      `;
+    } else { // 'both'
+      reportQuery = `
+        SELECT DISTINCT
+          tour.tournament_id,
+          tour.tournament_year,
+          tour.season,
+          p.person_id,
+          p.person_name,
+          'Player' AS role,
+          p.college_name,
+          CONCAT('H: ', pl.height, 'cm, W: ', pl.weight, 'kg') AS details
+        FROM Tournament tour
+        JOIN Match m ON tour.tournament_id = m.tournament_id
+        JOIN PlayerPlaysMatch ppm ON m.match_id = ppm.match_id
+        JOIN Player pl ON ppm.player_id = pl.player_id
+        JOIN Person p ON pl.player_id = p.person_id
+        
+        UNION ALL
+        
+        SELECT DISTINCT
+          tour.tournament_id,
+          tour.tournament_year,
+          tour.season,
+          p.person_id,
+          p.person_name,
+          'Spectator' AS role,
+          p.college_name,
+          CONCAT('Pass Type: ', UPPER(sp.pass_type)) AS details
+        FROM Tournament tour
+        JOIN SpectatorPass sp ON tour.tournament_id = sp.tournament_id
+        JOIN Person p ON sp.spectator_id = p.person_id
+        
+        ORDER BY tournament_id, person_id;
+      `;
+    }
 
     const result = await query(reportQuery);
 
+    let desc = 'All players participating in each tournament';
+    if (activeFilter === 'spectators') {
+      desc = 'All spectators registered for each tournament';
+    } else if (activeFilter === 'both') {
+      desc = 'All players and spectators for each tournament';
+    }
+
     res.json({
-      query: 'Tournament Participants',
-      description: 'All players participating in each tournament',
+      query: `Tournament Participants (${activeFilter.charAt(0).toUpperCase() + activeFilter.slice(1)})`,
+      description: desc,
       count: result.rows.length,
       data: result.rows,
     });
