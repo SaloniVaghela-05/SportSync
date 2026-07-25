@@ -2,8 +2,6 @@
 
 A PostgreSQL database, designed to administer, query, and analyze sports tournaments, teams, matches, and participant schedules.
 
-**Live Demo**: [sportsync.salonii.me](https://sportsync.salonii.me)
-
 ## Why SportSync?
 Manual tournament management breaks down fast, with duplicate registrations, missed schedule updates, delayed results, and no historical record. SportSync replaces that with a single, centralized, normalized PostgreSQL database,  one source of truth for every player, team, match, result, venue, sponsor, and statistic, built through a full requirements-to-schema design process and exposed through a working web application.
 
