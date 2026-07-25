@@ -3,7 +3,7 @@
 A PostgreSQL database, designed to administer, query, and analyze sports tournaments, teams, matches, and participant schedules.
 
 ## Why SportSync?
-Manual tournament management breaks down fast, with duplicate registrations, missed schedule updates, delayed results, and no historical record. SportSync replaces that with a single, centralized, normalized PostgreSQL database,  one source of truth for every player, team, match, result, venue, sponsor, and statistic, built through a full requirements-to-schema design process and exposed through a working web application.
+Manual tournament management breaks down fast, with duplicate registrations, missed schedule updates, delayed results, and no historical record. SportSync replaces that with a single, centralized, normalized PostgreSQL database,  one source of truth for every player, team, match, result, venue, sponsor, and statistic, built through a full requirements-to-schema design process.
 
 ---
 
@@ -46,7 +46,6 @@ This database was built through a complete DBMS design lifecycle, documented ste
 3. **ER Modeling**: a full ER diagram using specialization and aggregation to accurately capture relationship-dependent data.
 4. **Relational Mapping & Normalization** : every table's functional dependencies documented, verified against 1NF/2NF/3NF, then decomposed to **BCNF** where violations existed.
 5. **DDL Implementation**: The normalized design translated into PostgreSQL DDL with full constraint enforcement.
-6. **Application Layer**: A full-stack web app (SportSync) built on top of the schema, exposing operations, reports, and stored functions through a REST API.
 
 ---
 
