@@ -311,7 +311,7 @@ Complex analytical reports are displayed in a borderless tabular format with zeb
 ---
 ## Team
 
-- Yashvi Patel (202403035)
 - Saloni Vaghela (202403048)
+- Yashvi Patel (202403035)
 
 Built as part of the DBMS (MC212) coursework at DA-IICT.
