@@ -1,99 +1,168 @@
-# SportSync: Tournament Database Manager
+# SportSync: Sports Tournament Database Manager
 
-A PostgreSQL database designed to administer, query, and analyze sports tournaments, teams, matches, and participant schedules.
+A PostgreSQL database, designed to administer, query, and analyze sports tournaments, teams, matches, and participant schedules.
 
-LIVE DEMO: https://sportsync.salonii.me
----
+**Live Demo**: [sportsync.salonii.me](https://sportsync.salonii.me)
 
-## 📸 Application Showcase
-
-### 1. Main Dashboard Canvas
-The landing screen groups features logically into operations, analytical reports, and stored functions. It features a real-time blinking PostgreSQL database health banner.
-![Dashboard Layout](screenshots/homepage_dashboard.png)
-
-### 2. Multi-Step Form with Progress Stepper
-The registration form utilizes a custom visual progress stepper. Choosing "Player" vs "Spectator" changes the layout conditionally to gather role-specific physical attributes or ticket pass tiers.
-![Stepper and Form](screenshots/register_person_step1.png)
-
-### 3. Borderless Report Tables & Status Badges
-Complex analytical reports are displayed in a borderless tabular format with zebra striping. Data fields like seasons (`spring`/`fall`), outcome states, and ticket tiers are converted into dynamic colored pill badges.
-![Report Table Showcase](screenshots/tournament_participants_report.png)
+## Why SportSync?
+Manual tournament management breaks down fast, with duplicate registrations, missed schedule updates, delayed results, and no historical record. SportSync replaces that with a single, centralized, normalized PostgreSQL database,  one source of truth for every player, team, match, result, venue, sponsor, and statistic, built through a full requirements-to-schema design process and exposed through a working web application.
 
 ---
 
-## 📐 Entity-Relationship (ER) Diagram & Conceptual Model
-
-### Conceptual ER Diagram
-The system's schema is based on the following ER model, which maps sports tournaments, participants, logistics, and matches:
+## ER Diagram
 
 ![Entity-Relationship Diagram](sportER.png)
 
-### 1. Specialization & Generalization (Subclassing)
-* **The `Person` Superclass**: General entities like players and spectators share common attributes. To avoid redundancy and enforce clean design, `Person` serves as the superclass with attributes: `person_id` (PK), `person_name`, `gender`, `dob`, `contact_no`, `college_name`, and `roles`.
-* **Subclasses (`Player` and `Spectator`)**:
-  * **`Player` IS-A `Person`**: Inherits the primary key (`player_id` references `Person(person_id)`) and extends the profile with physical attributes: `height`, `weight`, `bloodgroup`, and `joining_year`.
-  * **`Spectator` IS-A `Person`**: Inherits the primary key (`spectator_id` references `Person(person_id)`) and is specialized for spectators purchasing ticket passes.
-* **Design Rationale**: Minimizes null values in the database, ensures schema reusability, and models real-world participant roles cleanly.
-
-### 2. Aggregation & Match Statistics
-Certain relationships contain statistics that depend on the combination of entities and matches rather than any single table.
-* **Player Performance Aggregation**: A player's performance (e.g., score, goals) in a specific match cannot reside in `Player` (a player plays multiple matches) or `Match` (a match has multiple players). Therefore, the `PlayerPlaysMatch` relationship is aggregated into **`PlayerStatistics`** with attributes `score` and `status_name` (PK is `(player_id, match_id, status_name)`).
-* **Team Performance Aggregation**: Similarly, a team's outcomes and statistics in a match are modeled by aggregating `TeamPlaysMatch` into **`TeamStatistics`** and the **`Result`** (outcome: win, loss, draw) table.
-* **Design Rationale**: Captures performance data at both player and team levels for each match, enabling historical analytics.
-
-### 3. Relationship Mappings & Participation Constraints
-* **`Person - Player / Spectator`**: 1:1 Specialization. Total participation from `Player` and `Spectator` to `Person` (every player/spectator must be a person), partial participation from `Person` (not all persons are players or spectators; some are organizers, coaches, etc.).
-* **`Player - Team`**: M:N Relationship via `PlayerTeam` junction table, tracking `joining_date` and `end_date` to support temporal player transfers.
-* **`Team - Sport`**: Many-to-1 relationship. Each team plays exactly one sport; a sport can have multiple teams.
-* **`Match - Venue / Referee`**: Many-to-1 relationships. Multiple matches can happen at the same venue or be conducted by the same referee. Partial participation (a venue or referee might not be assigned to any match yet).
+> Full requirement gathering, noun-verb analysis, and normalization rationale are in [`docs/`](docs/).
 
 ---
 
-## 🛠️ Database Building, Constraints & BCNF Normalization
 
-The database is built on **PostgreSQL** with strict adherence to Relational Model principles, normalization, and semantic data integrity.
+## Repository Structure
 
-### 1. BCNF Normalization (Boyce-Codd Normal Form)
-During the normalization phase, potential anomalies were analyzed and resolved to achieve BCNF across all relations:
-
-* **Sponsors & Company Split**:
-  * *Original Relation*: `Sponsors(sponsor_id, name, contact_no, address, company)`
-  * *Violation*: The functional dependency `company -> address` existed. Since `company` was not a superkey in `Sponsors`, this violated BCNF and caused update/deletion anomalies.
-  * *Decomposition*: Split into:
-    1. **`Company`** (`company` [PK], `address` [NOT NULL])
-    2. **`Sponsors`** (`sponsor_id` [PK], `name`, `contact_no`, `company` [FK references `Company(company)`])
-* **Sports & SportType Split**:
-  * *Original Relation*: `Sports(sport_id, sport_name, type)`
-  * *Violation*: The candidate key dependency `sport_name -> type` existed. Since `sport_name` was not a superkey in `Sports` (where `sport_id` is the primary key), this violated BCNF.
-  * *Decomposition*: Split into:
-    1. **`Sports`** (`sport_id` [PK], `sport_name` [UNIQUE, NOT NULL])
-    2. **`SportType`** (`sport_name` [PK, FK references `Sports(sport_name)`], `type` [NOT NULL])
-
-### 2. Referential Integrity & Cascading Actions
-To maintain strict foreign key integrity, the schema implements custom referential actions:
-* **`ON DELETE CASCADE` / `ON UPDATE CASCADE`**: Applied to dependency tables (`Player`, `SpectatorPass`, `PlayerPlaysMatch`, `PlayerTeam`, `Result`, etc.) to clean up linked records when a parent `Person`, `Match`, or `Team` is deleted.
-* **`ON DELETE SET NULL`**: Used for fields like `captain_id` in `Team` or `referee_id`/`venue_id` in `Match` so that deleting a player or referee doesn't break the team or match record.
-* **`ON DELETE RESTRICT`**: Applied to `Company` in the `Sponsors` table to prevent deleting a company while it still has active sponsor profiles.
-
-### 3. Semantic CHECK Constraints & Domain Integrity
-* **Regex Contact Validation**: `contact_no ~ '^[0-9]{10}$'` enforces a strict 10-digit number constraint on `Sponsors`, `Coach`, `Referee`, and `Organizer` tables.
-* **Temporal Date Constraints**:
-  * `chk_dates CHECK (end_date >= start_date)` in `Tournament` ensures no backwards tournament schedules.
-  * `check_out_date >= check_in_date` in `Accommodation` validates lodging stays.
-  * Match date check verifies that matches occur between year 2000 and one year in the future.
-* **Domain Limitations**:
-  * `gender`: Checked to be `'male'`, `'female'`, or `'other'` (case-insensitive).
-  * `pass_type`: Checked to be `'gold'`, `'silver'`, or `'regular'` (case-insensitive).
-  * `outcome`: Restricted to `'win'`, `'loss'`, or `'draw'`.
-  * `role` and `department` (Logistics, Operations, Marketing, Finance, Refereeing, Medical, Hospitality, Technical, Volunteers) in tournament organization.
-  * `level`: Restricted to `'beginner'`, `'intermediate'`, `'advanced'`, `'professional'`.
+```
+SportTournamentManagementSystem/
+├── README.md
+├── sportER.png                                   # Entity-relationship diagram
+├── docs/
+│   ├── SRS.pdf                                   # Requirements: interviews, questionnaire, fact-finding
+│   ├── NounVerbAnalysis_RelationalSchema.pdf      # Noun-verb extraction, ER-to-relational mapping
+│   └── Normalization_and_DDL_Design.pdf          # FDs, BCNF decomposition, design rationale
+├── schema/
+│   └── tables.sql                             # Full DDL 28 tables with constraints
+├── data/
+│   └── seed_data.sql                          # Seed dataset simulating a real multi-college tournament
+├── queries/
+│   └── queries.sql                            # Analytical queries and stored procedures
+└── screenshots/                                   # Application UI screenshots
+```
 
 ---
 
-## ⚡ Stored Procedures & Advanced Database Logic
+## Project Journey
 
-### 1. Active Player Team Information (`get_player_current_team_info`)
-This PL/pgSQL function retrieves the active team and college affiliations of a player:
+This database was built through a complete DBMS design lifecycle, documented step-by-step in `docs/`:
+
+1. **Requirements Gathering (SRS)**: background research on 5 real college fests, 3 stakeholder interviews (player, event coordinator, sports committee), a 28-response questionnaire, and direct observation, synthesized into functional/non-functional requirements and an access control matrix.
+2. **Noun-Verb Analysis**: systematic extraction of candidate entities, attributes, and relationships from the problem description, with an explicit accepted/rejected list (e.g., rejecting "Blood Group" and "Score" as attributes rather than entities).
+3. **ER Modeling**: a full ER diagram using specialization and aggregation to accurately capture relationship-dependent data.
+4. **Relational Mapping & Normalization** : every table's functional dependencies documented, verified against 1NF/2NF/3NF, then decomposed to **BCNF** where violations existed.
+5. **DDL Implementation**: The normalized design translated into PostgreSQL DDL with full constraint enforcement.
+6. **Application Layer**: A full-stack web app (SportSync) built on top of the schema, exposing operations, reports, and stored functions through a REST API.
+
+---
+
+## Conceptual Model
+
+### Specialization & Generalization
+`Person` is the superclass, holding attributes shared by every human in the system: `person_id` (PK), `person_name`, `gender`, `dob`, `contact_no`, `college_name`, `roles`.
+
+- **`Player` IS-A `Person`** — inherits the primary key (`player_id` references `Person(person_id)`) and adds `height`, `weight`, `bloodgroup`, `joining_year`.
+- **`Spectator` IS-A `Person`** — inherits the primary key (`spectator_id` references `Person(person_id)`) and is specialized for ticket-pass holders.
+
+Participation is **total** from Player/Spectator to Person (every player/spectator must be a person) and **partial** from Person (not every person is a player or spectator — some are organizers, coaches, etc.). This avoids redundancy, minimizes nulls, and models real-world participant roles cleanly.
+
+### Aggregation for Relationship-Dependent Data
+A player's performance in a specific match, or a team's outcome in a specific match, can't live in either parent entity alone:
+
+- **`PlayerPlaysMatch` → `PlayerStatistics`** — captures `score` and `status_name` per player per match (PK: `player_id, match_id, status_name`).
+- **`TeamPlaysMatch` → `TeamStatistics` / `Result`** — captures team-level outcomes (win/loss/draw) and stats per match.
+
+This enables historical, match-level analytics at both the player and team level.
+
+### Key Relationship Mappings
+
+| Relationship | Cardinality | Participation |
+|---|---|---|
+| Person – Player / Spectator | 1:1 (specialization) | Total (Player/Spectator) · Partial (Person) |
+| Player – Team | M:N (via `PlayerTeam`) | Tracks `joining_date`, `end_date` for transfers |
+| Team – Sport | M:1 | Each team plays exactly one sport |
+| Match – Venue / Referee | M:1 | Partial (venue/referee may be unassigned) |
+
+---
+
+## Data Model
+
+**Core Entities**
+
+| Entity | Purpose |
+|---|---|
+| `Person` | Base identity for every human in the system — superclass for Player/Spectator |
+| `Player` | Subclass of Person — height, weight, blood group, joining year |
+| `Team` | A college team registered under a specific sport |
+| `Match` | A scheduled game — sport, tournament, venue, referee, date, time |
+| `Result` | Outcome of a match — win/loss/draw per team |
+| `Tournament` | One edition of a fest — year, season, start/end dates |
+| `Sports` / `SportType` | Sport discipline and its classification (BCNF split) |
+| `Venue` | Physical match location |
+| `Referee` | Official assigned to conduct matches |
+| `Coach` | Trainer assigned to a team |
+| `Organizer` | Committee member running the tournament |
+| `Sponsors` / `Company` | Funding organizations and their details (BCNF split) |
+| `Equipments` | Sport-specific equipment inventory |
+
+**Junction Tables** (relationships with their own attributes)
+
+| Table | Relationship | Key Attributes |
+|---|---|---|
+| `PlayerTeam` | Player ↔ Team | `joining_date`, `end_date` (full roster history) |
+| `TeamCoach` | Team ↔ Coach | `join_date`, `end_date` |
+| `PlayerSport` | Player ↔ Sport | `level`, `experience_years` |
+| `TeamPlaysMatch` | Team ↔ Match | — |
+| `PlayerPlaysMatch` | Player ↔ Match | — |
+| `SponsorsTournament` | Sponsor ↔ Tournament | `budget` |
+| `SpectatorPass` | Person ↔ Tournament | `pass_type` (gold/silver/regular) |
+| `SpectatorViewMatch` | Person ↔ Match | — |
+| `OrganizeTournament` | Organizer ↔ Tournament | `role`, `department` |
+| `SportEquipments` | Sport ↔ Equipment | `number` |
+
+**Weak / Statistics Entities**
+
+| Entity | Owner | Purpose |
+|---|---|---|
+| `SportRules` | Sports | Rules text per sport |
+| `PlayerStatistics` | Player + Match | Sport-agnostic stat rows (`status_name`, `score`) |
+| `TeamStatistics` | Team + Match | Sport-agnostic team stat rows |
+
+---
+
+## Database Building, Constraints & BCNF Normalization
+
+### BCNF Decomposition
+
+Two relations violated BCNF during dependency analysis:
+
+**`Sponsors(sponsor_id, name, contact_no, address, company)`**
+`company → address` existed, and `company` wasn't a superkey — a BCNF violation causing update/deletion anomalies. Decomposed into:
+- `Company(company` [PK]`, address` [NOT NULL]`)`
+- `Sponsors(sponsor_id` [PK]`, name, contact_no, company` [FK → `Company`]`)`
+
+**`Sports(sport_id, sport_name, type)`**
+`sport_name → type` existed, and `sport_name` wasn't a superkey (`sport_id` is the PK). Decomposed into:
+- `Sports(sport_id` [PK]`, sport_name` [UNIQUE, NOT NULL]`)`
+- `SportType(sport_name` [PK, FK → `Sports`]`, type` [NOT NULL]`)`
+
+### Referential Integrity & Cascading Actions
+
+Every FK's `ON DELETE` behavior was chosen by asking: *does the child row have meaning without the parent?*
+
+- **`CASCADE`** — applied to dependent tables (`Player`, `SpectatorPass`, `PlayerPlaysMatch`, `PlayerTeam`, `Result`, etc.) so linked records clean up when a parent `Person`, `Match`, or `Team` is deleted.
+- **`SET NULL`** — used for `Team.captain_id`, `Match.referee_id`, `Match.venue_id` — the team survives without a captain, the match still happened without a recorded referee/venue.
+- **`RESTRICT`** — applied to `Company` in `Sponsors`, preventing deletion of a company while active sponsor profiles reference it.
+
+### Semantic CHECK Constraints
+
+- **Regex phone validation:** `contact_no ~ '^[0-9]{10}$'` on `Sponsors`, `Coach`, `Referee`, `Organizer`.
+- **Temporal checks:** `end_date >= start_date` (Tournament), `check_out_date >= check_in_date` (Accommodation), match dates bounded between year 2000 and one year in the future.
+- **Domain constraints:** `gender` ∈ {male, female, other}; `pass_type` ∈ {gold, silver, regular}; `outcome` ∈ {win, loss, draw}; `level` ∈ {beginner, intermediate, advanced, professional}; `department` ∈ {Logistics, Operations, Marketing, Finance, Refereeing, Medical, Hospitality, Technical, Volunteers} — all case-insensitive.
+
+---
+
+## Stored Procedures & Advanced Database Logic
+
+### `get_player_current_team_info` — Active Team Lookup
+Retrieves a player's current active team and college affiliation:
+
 ```sql
 CREATE OR REPLACE FUNCTION get_player_current_team_info(p_player_id VARCHAR)
 RETURNS TABLE (
@@ -119,8 +188,9 @@ END;
 $$ LANGUAGE plpgsql;
 ```
 
-### 2. Department Organizers (`get_organizers_by_department`)
+### `get_organizers_by_department` — Department Roster
 Aggregates organizers who worked in a specific department and consolidates their roles:
+
 ```sql
 CREATE OR REPLACE FUNCTION get_organizers_by_department(dept_name VARCHAR)
 RETURNS TABLE (
@@ -140,114 +210,111 @@ END;
 $$ LANGUAGE plpgsql;
 ```
 
-### 3. Complex Subqueries & Analytical Reports
-* **Fall Undefeated Teams**: Queries teams that did not lose or draw in any matches played during Autumn tournaments using `NOT EXISTS` and `EXISTS` subqueries.
-* **Top Scoring Players**: Queries player statistics to display the top 10 highest scorers across all matches.
+### Complex Analytical Queries
+- **Fall, Undefeated Teams** — teams with no losses or draws in Autumn tournaments, using `EXISTS`/`NOT EXISTS` subqueries.
+- **Top Scoring Players** — top 10 highest scorers across all matches, aggregated from `PlayerStatistics`.
 
 ---
 
-## 🛠️ Architecture & Tech Stack
-
-```
-sportsync/
-├── backend/              # Node.js & Express.js REST API
-│   ├── db/
-│   │   └── db.js         # PostgreSQL pool connection
-│   ├── routes/           # API Route handlers (Players, Tournaments, Reports, Functions)
-│   └── server.js         # Express server setup
-├── frontend/             # React & TypeScript Client SPA
-│   ├── src/
-│   │   ├── components/   # Reusable UI components (ReportTable)
-│   │   ├── pages/        # Dashboard, CRUD Forms, Reports
-│   │   └── App.tsx       # React router settings
-│   └── tailwind.config.js
-├── DDL.sql               # Core Database schema and constraints
-├── DATASET.sql           # Initial dataset load script
-├── FUNCTION_FIX.sql      # Stored procedures and PL/pgSQL database functions
-└── CREATE_FUNCTION_INSTRUCTIONS.md # Detailed setup guide for database functions
-```
-
-### Technologies Used:
-* **Frontend**: React (v18), TypeScript, Tailwind CSS, React Router (v6), Axios.
-* **Backend**: Node.js, Express.js.
-* **Database**: PostgreSQL (v12+), `pg` connection pool.
-
----
-
-## ⚙️ Installation & Configuration
-
-### Prerequisites
-* **Node.js** (v16 or higher)
-* **PostgreSQL** (v12 or higher)
-
-### 1. Database Setup
-1. Open your PostgreSQL console and create the database:
-   ```sql
-   CREATE DATABASE sporttournament;
-   ```
-2. Populate the tables, data, and functions using the SQL scripts:
-   ```bash
-   # Load tables schema
-   psql -U postgres -d sporttournament -f DDL.sql
-
-   # Populate dataset
-   psql -U postgres -d sporttournament -f DATASET.sql
-
-   # Create the custom stored functions
-   psql -U postgres -d sporttournament -f FUNCTION_FIX.sql
-   ```
-
-### 2. Backend Setup
-1. Navigate to the backend directory and install dependencies:
-   ```bash
-   cd backend
-   npm install
-   ```
-2. Create a `.env` file in `backend/` and configure database connection parameters:
-   ```env
-   DB_HOST=localhost
-   DB_PORT=5432
-   DB_NAME=sporttournament
-   DB_USER=postgres
-   DB_PASSWORD=your_postgres_password
-   PORT=5000
-   NODE_ENV=development
-   ```
-3. Start the Express server:
-   ```bash
-   npm start
-   ```
-
-### 3. Frontend Setup
-1. Navigate to the frontend directory and install dependencies:
-   ```bash
-   cd ../frontend
-   npm install
-   ```
-2. Launch the Vite dev server:
-   ```bash
-   npm run dev
-   ```
-3. Open `http://localhost:3000` in your web browser.
-
----
-
-## 📡 API Reference Endpoints
+## API Reference
 
 ### Operations & CRUD
-* `POST /api/person/player` — Register a person and athlete profile.
-* `POST /api/person/spectator` — Register a spectator with tournament tickets.
-* `POST /api/tournament` — Add a new tournament schedule.
-* `GET /api/player/:id` — Load single player profile.
-* `PUT /api/player/:id` — Update contact data and measurements.
-* `DELETE /api/player/:id` — Delete a player.
+| Endpoint | Description |
+|---|---|
+| `POST /api/person/player` | Register a person and athlete profile |
+| `POST /api/person/spectator` | Register a spectator with tournament tickets |
+| `POST /api/tournament` | Add a new tournament schedule |
+| `GET /api/player/:id` | Load single player profile |
+| `PUT /api/player/:id` | Update contact data and measurements |
+| `DELETE /api/player/:id` | Delete a player |
 
 ### Reporting & Views
-* `GET /api/report/tournament-participants` — Roster of players grouped by tournament.
-* `GET /api/report/top-scoring` — Top 10 high-scoring players list.
-* `GET /api/report/team-stats` — General win/loss statistics.
-* `GET /api/report/multidept-organizers` — Organizers working across multiple departments.
-* `GET /api/report/fall-undefeated` — Unbeaten Autumn teams list.
+| Endpoint | Description |
+|---|---|
+| `GET /api/report/tournament-participants` | Roster of players grouped by tournament |
+| `GET /api/report/top-scoring` | Top 10 high-scoring players list |
+| `GET /api/report/team-stats` | General win/loss statistics |
+| `GET /api/report/multidept-organizers` | Organizers working across multiple departments |
+| `GET /api/report/fall-undefeated` | Unbeaten Autumn teams list |
 
 ### Database Functions
-* `GET /api/function/player-team-college/:id` — Returns `get_player_current_team_info` results.
+| Endpoint | Description |
+|---|---|
+| `GET /api/function/player-team-college/:id` | Returns `get_player_current_team_info` results |
+
+---
+
+## Sample Dataset
+
+The seed data simulates a real multi-college tournament across 6 colleges (DA-IICT, Nirma University, PDPU, LDCE, MSU Baroda, IIT Gandhinagar) and 10 sports (Football, Cricket, Basketball, Badminton, Tennis, Volleyball, Table Tennis, Chess, Powerlifting, Carrom):
+
+| Table | Rows | Table | Rows |
+|---|---|---|---|
+| Person | 300 | PlayerTeam | 230 |
+| Player | 200 | TeamPlaysMatch | 60 |
+| Team | 60 | TeamCoach | 61 |
+| Match | 60 | PlayerStatistics | 55 |
+| Result | 120 | TeamStatistics | 60 |
+| Tournament | 14 | Accommodation | 112 |
+| SpectatorPass | 150 | OrganizeTournament | 98 |
+| Sponsors | 30 | SpectatorViewMatch | 64 |
+| Company | 20 | PlayerPlaysMatch | 90 |
+
+---
+
+## Setting Up
+
+```bash
+# 1. Clone the repository
+git clone https://github.com/SaloniVaghela-05/SportTournamentManagementSystem.git
+cd SportTournamentManagementSystem
+
+# 2. Create the database
+psql -U postgres -c "CREATE DATABASE SportTournamentDB;"
+
+# 3. Load the schema
+psql -U postgres -d SportTournamentDB -f schema/01_tables.sql
+
+# 4. Load the seed data
+psql -U postgres -d SportTournamentDB -f data/02_seed_data.sql
+
+# 5. Run sample queries and stored procedures
+psql -U postgres -d SportTournamentDB -f queries/03_queries.sql
+```
+
+---
+
+## Built With
+
+| Tool | Purpose |
+|---|---|
+| PostgreSQL | Primary database engine — schema, constraints, PL/pgSQL functions |
+| pgAdmin / psql | Schema design and query execution |
+| draw.io / Lucidchart | ER diagram design |
+
+---
+
+## Application Showcase
+
+### 1. Main Dashboard
+The landing screen groups features logically into operations, analytical reports, and stored functions, with a real-time blinking PostgreSQL database health banner.
+
+![Dashboard Layout](screenshots/homepage_dashboard.png)
+
+### 2. Multi-Step Registration Form
+A custom visual progress stepper. Choosing "Player" vs "Spectator" changes the layout conditionally to gather role-specific physical attributes or ticket pass tiers.
+
+![Stepper and Form](screenshots/register_person_step1.png)
+
+### 3. Analytical Report Tables
+Complex analytical reports are displayed in a borderless tabular format with zebra striping. Fields like season (`spring`/`fall`), outcome, and ticket tier render as dynamic colored status badges.
+
+![Report Table Showcase](screenshots/tournament_participants_report.png)
+
+---
+## Team
+
+- Yashvi Patel (202403035)
+- Saloni Vaghela (202403048)
+
+Built as part of the DBMS (MC212) coursework at DA-IICT.
